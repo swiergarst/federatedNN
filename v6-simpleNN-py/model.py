@@ -12,11 +12,11 @@ class model(nn.Module):
     def __init__(self, architecture):
         super(model, self).__init__()
 
-        num_layers = architecture.size
+        num_layers = architecture.size - 1
         self.layers = []
         for i in range(num_layers):
-            layer = nn.Linear(architecture[i, i+1])
-            self.layers.append(layer)
+            self.layer = nn.Linear(architecture[i], architecture[i+1])
+            self.layers.append(self.layer)
 
     #forward pass through the net
     def forward(self, input):
@@ -52,8 +52,12 @@ class model(nn.Module):
         return (correct / X_test.size)
 
     def set_params(self, params):
-        self.load_state_dict(params, strict=True)
+        for model_layer, param_layer in zip (self.layers, params):
+            model_layer.load_state_dict(param_layer, strict=True)
 
     def get_params(self):
-        return self.state_dict
+        parameters = []
+        for layer in self.layers:
+            parameters.append(layer.state_dict())
+        return parameters
         
