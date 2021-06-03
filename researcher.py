@@ -15,7 +15,7 @@ client = ClientMockProtocol(
 )
 
 organizations = client.get_organizations_in_my_collaboration()
-org_ids = [organization["id"] for organization in organizations]]
+org_ids = [organization["id"] for organization in organizations]
 
 
 
@@ -35,15 +35,14 @@ global_rounds = 1
 num_clients = 10
 dataset = 'banana'
 
-#create the weights and biases; this requires some acrobatics b/c of the specific format
-parameters = []
-
-for layer in range(architecture.size - 1):
-    param = {
-        'weight': torch.as_tensor(np.zeros((architecture[layer], architecture[layer + 1])).T),
-        'bias' : torch.as_tensor(np.zeros((architecture[layer + 1])))
-    }
-    parameters.append(param)
+torch.manual_seed(42)
+#create the weights and biases
+parameters= {
+    'fc1.weight' : torch.randn((4,2), dtype=torch.double),
+    'fc1.bias' : torch.randn((4), dtype=torch.double),
+    'fc2.weight' : torch.randn((2,4), dtype=torch.double),
+    'fc2.bias' : torch.randn((2), dtype=torch.double)
+}
 
 ### main loop
 for round in range(global_rounds):

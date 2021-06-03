@@ -6,8 +6,8 @@ from setuptools import setup, find_packages
 here = path.abspath(path.dirname(__file__))
 
 # get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+#with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+    #long_description = f.read()
 
 # # read the API version from disk
 # with open(path.join(here, 'vantage6', 'tools', 'VERSION')) as fp:
@@ -18,13 +18,14 @@ setup(
     name='v6-simpleNN-py',
     version="1.0.0",
     description='simple neural net implementation',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/IKNL/v6_boilerplate-py',
+    #long_description=long_description,
+    #long_description_content_type='text/markdown',
+    #url='https://github.com/IKNL/v6_boilerplate-py',
     packages=['v6-simpleNN-py'],
     python_requires='>=3.6',
     install_requires=[
         'sklearn',
+        'torch',
         'numpy'
         # 'vantage6-client'
     ]
