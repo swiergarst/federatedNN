@@ -1,7 +1,7 @@
 ### imports
 import torch 
 from .model import model
-
+import torch.optim as optim
 
 
 
@@ -14,16 +14,24 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train(data, architecture, weights):
+def RPC_train_and_test(data, architecture, weights, criterion, optimizer = 'SGD'):
     ### create net from given architeture
     net = model(architecture)
 
+    X_train, y_train, X_test, y_test = data
+
     ### initialize the weights from input
+    net.set_params(weights)
 
+    ### create optimizer 
+    if (optimizer == 'SGD'):
+        opt = optim.SGD(net.parameters, lr=5e-1)
 
-    ### forward pass
+    ### train the model
+    net.train(X_train, y_train, opt, criterion)
 
+    ### test the model
+    test_results = net.test(X_test, y_test)
 
-    ### backward pass
-
-    ### return the new weights
+    ### return the new weights and the test results
+    return net.get_params(), test_results
