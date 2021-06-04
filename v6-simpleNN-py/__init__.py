@@ -29,8 +29,8 @@ def RPC_train_and_test(data, architecture, parameters, criterion, optimizer = 'S
 
     X_train = torch.as_tensor(X_train_arr, dtype=torch.double)
     X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
-    y_train = torch.as_tensor(y_train_arr, dtype=torch.int)
-    y_test = torch.as_tensor(y_test_arr, dtype=torch.int)
+    y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
+    y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
 
     ### initialize the weights and biases from input
     net.set_params(parameters)
@@ -43,7 +43,7 @@ def RPC_train_and_test(data, architecture, parameters, criterion, optimizer = 'S
     net.train(X_train, y_train, opt, criterion)
 
     ### test the model
-    test_results = net.test(X_test, y_test)
+    test_results = net.test(X_test, y_test, criterion)
 
     ### return the new weights and the test results
     return net.get_params(), test_results

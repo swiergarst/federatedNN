@@ -32,32 +32,34 @@ class model(nn.Module):
 
 
     def train(self, X_train, y_train, optimizer, criterion):
+    #print(X_train)
+    #iterate through data
+    #for x, y in zip(X_train, y_train):
+        # zero the optimizer gradients
+        #print(y)
         #print(X_train)
-        #iterate through data
-        for x, y in zip(X_train, y_train):
-            # zero the optimizer gradients
-            print(y)
-            print(nn.functional.one_hot(y, num_classes=2))
-            optimizer.zero_grad()
-            #print(datapoint)
-            ### forward pass, backward pass, optimizer step
-            out = self.forward(x)
-            print(out)
-            loss = criterion(out, y)
-            loss.backward()
-            optimizer.step()
+        #y = nn.functional.one_hot(y_train, num_classes=2)
+        #print(y)
+        optimizer.zero_grad()
+        #print(datapoint)
+        ### forward pass, backward pass, optimizer step
+        out = self.forward(X_train)
+        #print(out)
+        loss = criterion(out, y_train)
+        loss.backward()
+        optimizer.step()
 
     def test(self, X_test, y_test, criterion):
         correct = 0
         with torch.no_grad():
-            for (x, y) in zip(X_test, y_test):
-                output = self.forward(x)
-                #loss = criterion(output, y)
-                # for now, only look at accuracy, using criterion we can expand this later on 
-                _, prediction = torch.max(output.data, 1)
-                correct += (prediction == y)
+            #for (x, y) in zip(X_test, y_test):
+            output = self.forward(X_test)
+            #loss = criterion(output, y)
+            # for now, only look at accuracy, using criterion we can expand this later on 
+            _, prediction = torch.max(output.data, 1)
+            correct += (prediction == y_test).sum().item()
         # return accuracy
-        return (correct / X_test.size)
+        return (correct / X_test.size()[0])
 
     def set_params(self, params):
         self.load_state_dict(params)
