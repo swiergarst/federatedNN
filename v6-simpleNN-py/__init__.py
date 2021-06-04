@@ -4,7 +4,7 @@ import torch
 from .model import model
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
-
+import numpy as np
 
 ### master task (will not be used in the current setup, as the researcher file will do this)
 def master_task():
@@ -46,4 +46,4 @@ def RPC_train_and_test(data, architecture, parameters, criterion, optimizer = 'S
     test_results = net.test(X_test, y_test, criterion)
 
     ### return the new weights and the test results
-    return net.get_params(), test_results
+    return [net.get_params(), test_results]

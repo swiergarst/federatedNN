@@ -2,6 +2,7 @@
 
 ### imports
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -31,7 +32,7 @@ architecture = np.array([2,4,2])
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 
-global_rounds = 1
+num_global_rounds = 20
 num_clients = 10
 dataset = 'banana'
 
@@ -44,8 +45,10 @@ parameters= {
     'fc2.bias' : torch.randn((2), dtype=torch.double)
 }
 
+acc_results = np.zeros((num_clients, num_global_rounds))
+
 ### main loop
-for round in range(global_rounds):
+for round in range(num_global_rounds):
 
     ### request task from clients
     round_task = client.create_new_task(
@@ -62,6 +65,25 @@ for round in range(global_rounds):
     )
 
     ### aggregate responses
-    results = client.get_results(round_task.get("id"))
-    print(results)
+    results = np.array(client.get_results(round_task.get("id")))
+    #print(results[:,1])
+    local_parameters = results[:,0]
+    acc_results[:, round] = results[:,1]
+
+    ### set the parameters dictionary to all zeros before aggregating
+    parameters= {
+    'fc1.weight' : torch.zeros((4,2), dtype=torch.double),
+    'fc1.bias' : torch.zeros((4), dtype=torch.double),
+    'fc2.weight' : torch.zeros((2,4), dtype=torch.double),
+    'fc2.bias' : torch.zeros((2), dtype=torch.double)
+}
+    for param in parameters.keys():
+        for i in range(num_clients):
+            parameters[param] += local_parameters[i][param]
+        parameters[param] /= num_clients
+
+print(acc_results)
+x = np.arange(num_global_rounds)
+plt.plot(x, np.mean(acc_results, axis=0))
+plt.show()
     ### generate new model parameters
