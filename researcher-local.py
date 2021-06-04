@@ -6,22 +6,17 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import time
 
-from io import BytesIO
-from vantage6.tools.util import info
-from vantage6.client import Client
+from vantage6.tools.mock_client import ClientMockProtocol
+
 ### connect to server
+client = ClientMockProtocol(
+    datasets= ["/home/swier/Documents/afstuderen/nnTest/v6-simpleNN-py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)],
+    module="v6-simpleNN-py"
+)
 
-print("Attempt login to Vantage6 API")
-client = Client("http://localhost", 5000, "/api")
-client.authenticate("researcher", "1234")
-
-client.setup_encryption(None)
-
-
-#organizations = client.get_organizations_in_my_collaboration()
-#org_ids = [organization["id"] for organization in organizations]
+organizations = client.get_organizations_in_my_collaboration()
+org_ids = [organization["id"] for organization in organizations]
 
 
 
@@ -36,8 +31,6 @@ client.setup_encryption(None)
 architecture = np.array([2,4,2])
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-
-ids = [i for i in range(1,11)]
 
 num_global_rounds = 20
 num_clients = 10
@@ -58,7 +51,7 @@ acc_results = np.zeros((num_clients, num_global_rounds))
 for round in range(num_global_rounds):
 
     ### request task from clients
-    round_task = client.post_task(
+    round_task = client.create_new_task(
         input_= {
             'method' : 'train_and_test',
             'kwargs' : {
@@ -68,33 +61,14 @@ for round in range(num_global_rounds):
                 'optimizer': optimizer
             }
         },
-        name = "nntest round " + str(round),
-        image = "sgarst/federated-learning:nnTest",
-        organization_ids=ids,
-        collaboration_id= 1
+        organization_ids=org_ids
     )
-    info("Waiting for results")
-    res = client.get_results(task_id=round_task.get("id"))
-    attempts=1
-    
-    while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 7):
-        print("waiting...")
-        time.sleep(5)
-        res = client.get_results(task_id=round_task.get("id"))
-        attempts += 1
 
-    info("Obtaining results")
-    #result  = client.get_results(task_id=task.get("id"))
-    result = []
-    for i in range(num_clients):
-        result.append(np.load(BytesIO(res[i]["result"]),allow_pickle=True))
-    
-
-    results = np.array(result)
-    #print(np.array(results[0,1]))
+    ### aggregate responses
+    results = np.array(client.get_results(round_task.get("id")))
     #print(results[:,1])
-    local_parameters = np.array(results[:,0])
-    acc_results[:, round] = np.array(results[:,1])
+    local_parameters = results[:,0]
+    acc_results[:, round] = results[:,1]
 
     ### set the parameters dictionary to all zeros before aggregating
     parameters= {
