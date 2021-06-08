@@ -41,7 +41,7 @@ ids = [i for i in range(1,11)]
 
 num_global_rounds = 20
 num_clients = 10
-dataset = 'banana'
+dataset = 'MNIST'
 
 torch.manual_seed(42)
 #create the weights and biases
@@ -75,11 +75,12 @@ for round in range(num_global_rounds):
                 'architecture' : architecture,
                 'parameters' : parameters,
                 'criterion': criterion,
-                'optimizer': optimizer
+                'optimizer': optimizer,
+                'dataset' : dataset
             }
         },
         name = "nntest round " + str(round),
-        image = "sgarst/federated-learning:nnTest",
+        image = "sgarst/federated-learning:nnTestMNIST",
         organization_ids=ids,
         collaboration_id= 1
     )
