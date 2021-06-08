@@ -13,17 +13,19 @@ class model(nn.Module):
         super(model, self).__init__()
 
         #num_layers = architecture.size - 1
-        self.fc1 = nn.Linear(2,4)
-        self.fc2 = nn.Linear(4,2)
-        #self.layers = []
-        #for i in range(num_layers):
-        #    self.layer = nn.Linear(architecture[i], architecture[i+1])
-        #    self.layers.append(self.layer)
+        ## the 'old' architecture
+        #self.fc1 = nn.Linear(2,4)
+        #self.fc2 = nn.Linear(4,2)
+
+        self.fc1 = nn.Linear(28*28,100)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(100,10)
 
     #forward pass through the net
     def forward(self, input):
         #print(input)
         y1 = self.fc1(input)
+        y1 = self.relu1(y1)
         #y = input
         #for layer in self.layers:
         #    y = layer(y)

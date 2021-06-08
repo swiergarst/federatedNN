@@ -45,12 +45,22 @@ dataset = 'banana'
 
 torch.manual_seed(42)
 #create the weights and biases
-parameters= {
-    'fc1.weight' : torch.randn((4,2), dtype=torch.double),
-    'fc1.bias' : torch.randn((4), dtype=torch.double),
-    'fc2.weight' : torch.randn((2,4), dtype=torch.double),
-    'fc2.bias' : torch.randn((2), dtype=torch.double)
-}
+if dataset == 'banana':
+    parameters= {
+        'fc1.weight' : torch.randn((4,2), dtype=torch.double),
+        'fc1.bias' : torch.randn((4), dtype=torch.double),
+        'fc2.weight' : torch.randn((2,4), dtype=torch.double),
+        'fc2.bias' : torch.randn((2), dtype=torch.double)
+    }
+elif dataset == 'MNIST' : 
+# mnist parameters
+    parameters= {
+        'fc1.weight' : torch.randn((100,28*28), dtype=torch.double),
+        'fc1.bias' : torch.randn((100), dtype=torch.double),
+        'fc2.weight' : torch.randn((10,100), dtype=torch.double),
+        'fc2.bias' : torch.randn((10), dtype=torch.double)
+    }
+
 
 acc_results = np.zeros((num_clients, num_global_rounds))
 
@@ -97,12 +107,21 @@ for round in range(num_global_rounds):
     acc_results[:, round] = np.array(results[:,1])
 
     ### set the parameters dictionary to all zeros before aggregating
-    parameters= {
-    'fc1.weight' : torch.zeros((4,2), dtype=torch.double),
-    'fc1.bias' : torch.zeros((4), dtype=torch.double),
-    'fc2.weight' : torch.zeros((2,4), dtype=torch.double),
-    'fc2.bias' : torch.zeros((2), dtype=torch.double)
-}
+    if dataset == 'banana' :
+
+        parameters= {
+        'fc1.weight' : torch.zeros((4,2), dtype=torch.double),
+        'fc1.bias' : torch.zeros((4), dtype=torch.double),
+        'fc2.weight' : torch.zeros((2,4), dtype=torch.double),
+        'fc2.bias' : torch.zeros((2), dtype=torch.double)
+    }
+    elif dataset == 'MNIST':
+        parameters= {
+        'fc1.weight' : torch.zeros((100,28*28), dtype=torch.double),
+        'fc1.bias' : torch.zeros((100), dtype=torch.double),
+        'fc2.weight' : torch.zeros((10,100), dtype=torch.double),
+        'fc2.bias' : torch.zeros((10), dtype=torch.double)
+    }
     for param in parameters.keys():
         for i in range(num_clients):
             parameters[param] += local_parameters[i][param]

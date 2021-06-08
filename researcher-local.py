@@ -11,7 +11,9 @@ from vantage6.tools.mock_client import ClientMockProtocol
 
 ### connect to server
 client = ClientMockProtocol(
-    datasets= ["/home/swier/Documents/afstuderen/nnTest/v6-simpleNN-py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)],
+    #datasets= ["/home/swier/Documents/afstuderen/nnTest/v6-simpleNN-py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)],
+    
+    datasets= ["/home/swier/Documents/afstuderen/nnTest/v6-simpleNN-py/local/MNIST/MNIST_dataset_client" + str(i) + ".csv" for i in range(10)],
     module="v6-simpleNN-py"
 )
 
@@ -34,16 +36,27 @@ optimizer = 'SGD'
 
 num_global_rounds = 20
 num_clients = 10
-dataset = 'banana'
+#dataset = 'banana'
+dataset = 'MNIST'
 
 torch.manual_seed(42)
 #create the weights and biases
-parameters= {
-    'fc1.weight' : torch.randn((4,2), dtype=torch.double),
-    'fc1.bias' : torch.randn((4), dtype=torch.double),
-    'fc2.weight' : torch.randn((2,4), dtype=torch.double),
-    'fc2.bias' : torch.randn((2), dtype=torch.double)
-}
+# moons parameters
+if dataset == 'banana':
+    parameters= {
+        'fc1.weight' : torch.randn((4,2), dtype=torch.double),
+        'fc1.bias' : torch.randn((4), dtype=torch.double),
+        'fc2.weight' : torch.randn((2,4), dtype=torch.double),
+        'fc2.bias' : torch.randn((2), dtype=torch.double)
+    }
+elif dataset == 'MNIST' : 
+# mnist parameters
+    parameters= {
+        'fc1.weight' : torch.randn((100,28*28), dtype=torch.double),
+        'fc1.bias' : torch.randn((100), dtype=torch.double),
+        'fc2.weight' : torch.randn((10,100), dtype=torch.double),
+        'fc2.bias' : torch.randn((10), dtype=torch.double)
+    }
 
 acc_results = np.zeros((num_clients, num_global_rounds))
 
@@ -58,7 +71,8 @@ for round in range(num_global_rounds):
                 'architecture' : architecture,
                 'parameters' : parameters,
                 'criterion': criterion,
-                'optimizer': optimizer
+                'optimizer': optimizer,
+                'dataset' : dataset
             }
         },
         organization_ids=org_ids
@@ -71,12 +85,21 @@ for round in range(num_global_rounds):
     acc_results[:, round] = results[:,1]
 
     ### set the parameters dictionary to all zeros before aggregating
-    parameters= {
-    'fc1.weight' : torch.zeros((4,2), dtype=torch.double),
-    'fc1.bias' : torch.zeros((4), dtype=torch.double),
-    'fc2.weight' : torch.zeros((2,4), dtype=torch.double),
-    'fc2.bias' : torch.zeros((2), dtype=torch.double)
-}
+    if dataset == 'banana' :
+
+        parameters= {
+        'fc1.weight' : torch.zeros((4,2), dtype=torch.double),
+        'fc1.bias' : torch.zeros((4), dtype=torch.double),
+        'fc2.weight' : torch.zeros((2,4), dtype=torch.double),
+        'fc2.bias' : torch.zeros((2), dtype=torch.double)
+    }
+    elif dataset == 'MNIST':
+        parameters= {
+        'fc1.weight' : torch.zeros((100,28*28), dtype=torch.double),
+        'fc1.bias' : torch.zeros((100), dtype=torch.double),
+        'fc2.weight' : torch.zeros((10,100), dtype=torch.double),
+        'fc2.bias' : torch.zeros((10), dtype=torch.double)
+    }
     for param in parameters.keys():
         for i in range(num_clients):
             parameters[param] += local_parameters[i][param]

@@ -15,23 +15,34 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, architecture, parameters, criterion, optimizer = 'SGD'):
+def RPC_train_and_test(data, architecture, parameters, criterion, optimizer = 'SGD', dataset = 'banana'):
     ### create net from given architeture
     net = model(architecture)
     net = net.double() #apparently I need this
 
     #load in the data file in the correct format
-    dim_num = 2
-    dims = ['dim' + str(i) for i in range(dim_num)]
-    x_tot = data[dims].values
-    y_tot = data['label'].values
-    X_train_arr, X_test_arr, y_train_arr, y_test_arr = train_test_split(x_tot, y_tot, test_size = 0.20, random_state=42)
-
-    X_train = torch.as_tensor(X_train_arr, dtype=torch.double)
-    X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
-    y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
-    y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
-
+    if dataset == 'banana':
+        dim_num = 2
+        dims = ['dim' + str(i) for i in range(dim_num)]
+        x_tot = data[dims].values
+        y_tot = data['label'].values
+        X_train_arr, X_test_arr, y_train_arr, y_test_arr = train_test_split(x_tot, y_tot, test_size = 0.20, random_state=42)
+    
+        X_train = torch.as_tensor(X_train_arr, dtype=torch.double)
+        X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
+        y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
+        y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
+    elif dataset == 'MNIST':
+        dim_num = 784
+        dims = ['pixel' + str(i) for i in range(dim_num)]
+        X_train_arr = data.loc[data['test/train'] == 'train'][dims].values
+        y_train_arr = data.loc[data['test/train'] == 'train']['label'].values
+        X_test_arr = data.loc[data['test/train'] == 'test'][dims].values
+        y_test_arr = data.loc[data['test/train'] == 'test']['label'].values
+        X_train = torch.as_tensor(X_train_arr, dtype=torch.double)
+        X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
+        y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
+        y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
     ### initialize the weights and biases from input
     net.set_params(parameters)
 
