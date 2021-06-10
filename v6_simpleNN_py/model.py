@@ -9,28 +9,28 @@ import torch.nn as nn
 
 
 class model(nn.Module):
-    def __init__(self, architecture):
+    def __init__(self, dataset='banana'):
         super(model, self).__init__()
-
-        #num_layers = architecture.size - 1
-        ## the 'old' architecture
-        #self.fc1 = nn.Linear(2,4)
-        #self.fc2 = nn.Linear(4,2)
-
-        self.fc1 = nn.Linear(28*28,100)
-        self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(100,10)
+        self.dataset = dataset
+        if dataset == "banana":
+            self.fc1 = nn.Linear(2,4)
+            self.fc2 = nn.Linear(4,2)
+        elif dataset == "MNIST" :
+            self.fc1 = nn.Linear(28*28,100)
+            self.relu1 = nn.ReLU()
+            self.fc2 = nn.Linear(100,10)
+        print(self.state_dict())
 
     #forward pass through the net
     def forward(self, input):
         #print(input)
-        y1 = self.fc1(input)
-        y1 = self.relu1(y1)
-        #y = input
-        #for layer in self.layers:
-        #    y = layer(y)
-
-        return self.fc2(y1)
+        if self.dataset == 'banana':
+            y1 = self.fc1(input)
+            return self.fc2(y1)
+        elif self.dataset == 'MNIST' :
+            y1 = self.fc1(input)
+            y1 = self.relu1(y1)
+            return self.fc2(y1)
 
 
     def train(self, X_train, y_train, optimizer, criterion):

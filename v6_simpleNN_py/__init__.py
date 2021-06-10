@@ -15,9 +15,9 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, architecture, parameters, criterion, optimizer = 'SGD', dataset = 'banana'):
+def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset = 'banana'):
     ### create net from given architeture
-    net = model(architecture)
+    net = model(dataset)
     net = net.double() #apparently I need this
 
     #load in the data file in the correct format

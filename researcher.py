@@ -7,7 +7,12 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import time
+import sys
+import os
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
+from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
@@ -37,9 +42,10 @@ architecture = np.array([2,4,2])
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 
+
 ids = [i for i in range(1,11)]
 
-num_global_rounds = 20
+num_global_rounds = 100
 num_clients = 10
 dataset = 'MNIST'
 
@@ -63,10 +69,18 @@ elif dataset == 'MNIST' :
 
 
 acc_results = np.zeros((num_clients, num_global_rounds))
+complete_test_results = np.empty((1, num_global_rounds))
+### create a model for 'global' testing
+### also get the full testing data
+MNIST_test = torch.load("/home/swier/Documents/afstuderen/MNIST/processed/test.pt")
+X_test = MNIST_test[0].flatten(start_dim=1)/255
+y_test = MNIST_test[1]
+testModel = model(dataset)
+
 
 ### main loop
 for round in range(num_global_rounds):
-
+    print("starting round", round)
     ### request task from clients
     round_task = client.post_task(
         input_= {
@@ -127,9 +141,14 @@ for round in range(num_global_rounds):
         for i in range(num_clients):
             parameters[param] += local_parameters[i][param]
         parameters[param] /= num_clients
-print(acc_results)
+    testModel.set_params(parameters)
+    complete_test_results[0,round]  = testModel.test(X_test, y_test, criterion)
+
+print(repr(acc_results))
+print(repr(complete_test_results))
 print(np.mean(acc_results, axis=0))
 x = np.arange(num_global_rounds)
 plt.plot(x, np.mean(acc_results, axis=0))
+plt.plot(x, complete_test_results)
 plt.show()
     ### generate new model parameters

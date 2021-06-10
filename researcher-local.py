@@ -6,15 +6,34 @@ import matplotlib.pyplot as plt
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import sys
+import os
+
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 
 from vantage6.tools.mock_client import ClientMockProtocol
+from v6_simpleNN_py.model import model
+
+# parameters
+criterion = nn.CrossEntropyLoss()
+optimizer = 'SGD'
+
+num_global_rounds = 20
+num_clients = 10
+dataset = 'MNIST'
+
+if dataset == 'banana':
+    datasets =  ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)]
+elif dataset == 'MNIST':
+    datasets= ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST/MNIST_dataset_client" + str(i) + ".csv" for i in range(10)]
 
 ### connect to server
 client = ClientMockProtocol(
     #datasets= ["/home/swier/Documents/afstuderen/nnTest/v6-simpleNN-py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)],
     
-    datasets= ["/home/swier/Documents/afstuderen/nnTest/v6-simpleNN-py/local/MNIST/MNIST_dataset_client" + str(i) + ".csv" for i in range(10)],
-    module="v6-simpleNN-py"
+    datasets= datasets,
+    module="v6_simpleNN_py"
 )
 
 organizations = client.get_organizations_in_my_collaboration()
@@ -31,13 +50,8 @@ org_ids = [organization["id"] for organization in organizations]
 # this is not counting the output as a layer    
 
 architecture = np.array([2,4,2])
-criterion = nn.CrossEntropyLoss()
-optimizer = 'SGD'
 
-num_global_rounds = 20
-num_clients = 10
-#dataset = 'banana'
-dataset = 'MNIST'
+#dataset = 'MNIST'
 
 torch.manual_seed(42)
 #create the weights and biases
@@ -68,7 +82,6 @@ for round in range(num_global_rounds):
         input_= {
             'method' : 'train_and_test',
             'kwargs' : {
-                'architecture' : architecture,
                 'parameters' : parameters,
                 'criterion': criterion,
                 'optimizer': optimizer,
@@ -100,13 +113,25 @@ for round in range(num_global_rounds):
         'fc2.weight' : torch.zeros((10,100), dtype=torch.double),
         'fc2.bias' : torch.zeros((10), dtype=torch.double)
     }
+    ### generate new model parameters
     for param in parameters.keys():
         for i in range(num_clients):
             parameters[param] += local_parameters[i][param]
         parameters[param] /= num_clients
-print(acc_results)
+
+
+# finally, do one test on 'all' test data
+MNIST_test = torch.load("/home/swier/Documents/afstuderen/MNIST/processed/test.pt")
+X_test = MNIST_test[0].flatten(start_dim=1)/255
+y_test = MNIST_test[1]
+testModel = model(dataset)
+testModel.set_params(parameters)
+complete_test_results  = testModel.test(X_test, y_test, criterion)
+
+#print(acc_results)
+print(complete_test_results)
 print(np.mean(acc_results, axis=0))
 x = np.arange(num_global_rounds)
 plt.plot(x, np.mean(acc_results, axis=0))
+plt.plot(num_global_rounds,complete_test_results)
 plt.show()
-    ### generate new model parameters

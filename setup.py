@@ -15,13 +15,13 @@ here = path.abspath(path.dirname(__file__))
 
 # setup the package
 setup(
-    name='v6-simpleNN-py',
+    name='v6_simpleNN_py',
     version="1.0.0",
     description='simple neural net implementation',
     #long_description=long_description,
     #long_description_content_type='text/markdown',
     #url='https://github.com/IKNL/v6_boilerplate-py',
-    packages=['v6-simpleNN-py'],
+    packages=['v6_simpleNN_py'],
     python_requires='>=3.6',
     install_requires=[
         'sklearn',
