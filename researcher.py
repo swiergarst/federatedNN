@@ -9,6 +9,7 @@ import torch.optim as optim
 import time
 import sys
 import os
+import time 
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
@@ -16,7 +17,10 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
+from helper_functions import average
+start_time = time.time()
 ### connect to server
+
 
 print("Attempt login to Vantage6 API")
 client = Client("http://localhost", 5000, "/api")
@@ -66,15 +70,31 @@ elif dataset == 'MNIST' :
         'fc2.weight' : torch.randn((10,100), dtype=torch.double),
         'fc2.bias' : torch.randn((10), dtype=torch.double)
     }
+elif dataset == 'MNIST_2class_IID' : 
+    parameters = {
+        'fc1.weight' : torch.randn((100,28*28), dtype=torch.double),
+        'fc1.bias' : torch.randn((100), dtype=torch.double),
+        'fc2.weight' : torch.randn((2,100), dtype=torch.double),
+        'fc2.bias' : torch.randn((2), dtype=torch.double)
+    }
 
 
 acc_results = np.zeros((num_clients, num_global_rounds))
 complete_test_results = np.empty((1, num_global_rounds))
 ### create a model for 'global' testing
 ### also get the full testing data
-MNIST_test = torch.load("/home/swier/Documents/afstuderen/MNIST/processed/test.pt")
-X_test = MNIST_test[0].flatten(start_dim=1)/255
-y_test = MNIST_test[1]
+# TODO: rewrite this to a function
+if dataset == 'MNIST' : 
+    MNIST_test = torch.load("/home/swier/Documents/afstuderen/MNIST/processed/test.pt")
+    X_test = MNIST_test[0].flatten(start_dim=1)/255
+    y_test = MNIST_test[1]
+elif dataset == 'MNIST_2class_IID' :
+    datasets = ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_IID/MNIST_2Class_IID_client" + str(i) + ".csv" for i in range(10)]   
+    dim_num = 784
+    dims = ['pixel' + str(i) for i in range(dim_num)]
+    for set in datasets:
+        X_test_partial = set.loc[set['test/train'] == 'test']
+
 testModel = model(dataset)
 
 
@@ -94,7 +114,7 @@ for round in range(num_global_rounds):
             }
         },
         name = "nntest round " + str(round),
-        image = "sgarst/federated-learning:nnTestMNIST",
+        image = "sgarst/federated-learning:nnTest",
         organization_ids=ids,
         collaboration_id= 1
     )
@@ -102,7 +122,7 @@ for round in range(num_global_rounds):
     res = client.get_results(task_id=round_task.get("id"))
     attempts=1
     
-    while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 7):
+    while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 20):
         print("waiting...")
         time.sleep(5)
         res = client.get_results(task_id=round_task.get("id"))
@@ -120,33 +140,25 @@ for round in range(num_global_rounds):
     #print(results[:,1])
     local_parameters = np.array(results[:,0])
     acc_results[:, round] = np.array(results[:,1])
+    dataset_sizes = np.array(results[:,2])
+    parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes=False)
 
-    ### set the parameters dictionary to all zeros before aggregating
-    if dataset == 'banana' :
-
-        parameters= {
-        'fc1.weight' : torch.zeros((4,2), dtype=torch.double),
-        'fc1.bias' : torch.zeros((4), dtype=torch.double),
-        'fc2.weight' : torch.zeros((2,4), dtype=torch.double),
-        'fc2.bias' : torch.zeros((2), dtype=torch.double)
-    }
-    elif dataset == 'MNIST':
-        parameters= {
-        'fc1.weight' : torch.zeros((100,28*28), dtype=torch.double),
-        'fc1.bias' : torch.zeros((100), dtype=torch.double),
-        'fc2.weight' : torch.zeros((10,100), dtype=torch.double),
-        'fc2.bias' : torch.zeros((10), dtype=torch.double)
-    }
-    for param in parameters.keys():
-        for i in range(num_clients):
-            parameters[param] += local_parameters[i][param]
-        parameters[param] /= num_clients
+    # 'global' test
     testModel.set_params(parameters)
     complete_test_results[0,round]  = testModel.test(X_test, y_test, criterion)
 
+
+### save arrays to files
+with open ("testfile.npy", 'wb') as f:
+    np.save(f, acc_results)
+
+with open ("testfile2.npy", 'wb') as f2:
+    np.save(f2, complete_test_results)
+
 print(repr(acc_results))
 print(repr(complete_test_results))
-print(np.mean(acc_results, axis=0))
+#print(np.mean(acc_results, axis=0))
+print("final runtime", time.time() - start_time)
 x = np.arange(num_global_rounds)
 plt.plot(x, np.mean(acc_results, axis=0))
 plt.plot(x, complete_test_results)

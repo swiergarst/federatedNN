@@ -32,7 +32,7 @@ def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset =
         X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
         y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
         y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
-    elif dataset == 'MNIST':
+    elif dataset == 'MNIST' or dataset == 'MNIST_2class_IID':
         dim_num = 784
         dims = ['pixel' + str(i) for i in range(dim_num)]
         X_train_arr = data.loc[data['test/train'] == 'train'][dims].values
@@ -43,6 +43,8 @@ def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset =
         X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
         y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
         y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
+
+        num_samples = X_train.size()[0]
     ### initialize the weights and biases from input
     net.set_params(parameters)
 
@@ -57,4 +59,4 @@ def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset =
     test_results = net.test(X_test, y_test, criterion)
 
     ### return the new weights and the test results
-    return [net.get_params(), test_results]
+    return [net.get_params(), test_results, num_samples]

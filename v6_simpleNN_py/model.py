@@ -15,10 +15,14 @@ class model(nn.Module):
         if dataset == "banana":
             self.fc1 = nn.Linear(2,4)
             self.fc2 = nn.Linear(4,2)
-        elif dataset == "MNIST" :
+        elif dataset == "MNIST":
             self.fc1 = nn.Linear(28*28,100)
             self.relu1 = nn.ReLU()
             self.fc2 = nn.Linear(100,10)
+        elif dataset == "MNIST_2class_IID" : 
+            self.fc1 = nn.Linear(28*28, 100)
+            self.relu1 = nn.ReLU()
+            self.fc2 = nn.Linear(100,2)
         print(self.state_dict())
 
     #forward pass through the net
@@ -27,7 +31,7 @@ class model(nn.Module):
         if self.dataset == 'banana':
             y1 = self.fc1(input)
             return self.fc2(y1)
-        elif self.dataset == 'MNIST' :
+        elif self.dataset == 'MNIST' or 'MNIST_2class_IID':
             y1 = self.fc1(input)
             y1 = self.relu1(y1)
             return self.fc2(y1)
