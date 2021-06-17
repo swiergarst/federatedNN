@@ -10,6 +10,7 @@ import time
 import sys
 import os
 import time 
+import pandas as pd
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
@@ -17,7 +18,7 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average
+from helper_functions import average, get_datasets
 start_time = time.time()
 ### connect to server
 
@@ -51,7 +52,9 @@ ids = [i for i in range(1,11)]
 
 num_global_rounds = 100
 num_clients = 10
-dataset = 'MNIST'
+dataset = 'MNIST_2class_IID'
+class_imbalance = False
+sample_imbalance = True
 
 torch.manual_seed(42)
 #create the weights and biases
@@ -89,13 +92,27 @@ if dataset == 'MNIST' :
     X_test = MNIST_test[0].flatten(start_dim=1)/255
     y_test = MNIST_test[1]
 elif dataset == 'MNIST_2class_IID' :
+    datasets = get_datasets(dataset, class_imbalance, sample_imbalance)
     datasets = ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_IID/MNIST_2Class_IID_client" + str(i) + ".csv" for i in range(10)]   
     dim_num = 784
     dims = ['pixel' + str(i) for i in range(dim_num)]
-    for set in datasets:
-        X_test_partial = set.loc[set['test/train'] == 'test']
+
+    for i,  set in enumerate(datasets):
+        data = pd.read_csv(set)
+        X_test_partial = data.loc[data['test/train'] == 'test'][dims].values
+        y_test_partial = data.loc[data['test/train'] == 'test']['label'].values
+        if i == 0:
+            X_test = X_test_partial
+            y_test = y_test_partial
+        else:
+            X_test_arr = np.concatenate((X_test, X_test_partial))
+            y_test_arr = np.concatenate((y_test, y_test_partial))
+
+    X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
+    y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
 
 testModel = model(dataset)
+testModel.double()
 
 
 ### main loop
@@ -106,14 +123,14 @@ for round in range(num_global_rounds):
         input_= {
             'method' : 'train_and_test',
             'kwargs' : {
-                'architecture' : architecture,
+                #'architecture' : architecture,
                 'parameters' : parameters,
                 'criterion': criterion,
                 'optimizer': optimizer,
                 'dataset' : dataset
             }
         },
-        name = "nntest round " + str(round),
+        name = "sample imbalance, truly no comp round " + str(round),
         image = "sgarst/federated-learning:nnTest",
         organization_ids=ids,
         collaboration_id= 1
@@ -149,10 +166,10 @@ for round in range(num_global_rounds):
 
 
 ### save arrays to files
-with open ("testfile.npy", 'wb') as f:
+with open ("sample_imb_truly_no_comp_local.npy", 'wb') as f:
     np.save(f, acc_results)
 
-with open ("testfile2.npy", 'wb') as f2:
+with open ("sample_imb_truly_no_comp_global.npy", 'wb') as f2:
     np.save(f2, complete_test_results)
 
 print(repr(acc_results))

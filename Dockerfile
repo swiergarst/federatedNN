@@ -3,10 +3,13 @@ FROM harbor.vantage6.ai/algorithms/algorithm-base
 
 # This is a placeholder that should be overloaded by invoking
 # docker build with '--build-arg PKG_NAME=...'
-ARG PKG_NAME="v6-simpleNN-py"
+ARG PKG_NAME="v6_simpleNN_py"
 
 # install federated algorithm
 COPY . /app
+
+#FROM python 
+
 RUN pip install /app
 
 ENV PKG_NAME=${PKG_NAME}

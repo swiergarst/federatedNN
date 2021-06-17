@@ -51,12 +51,13 @@ def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset =
     ### create optimizer 
     if (optimizer == 'SGD'):
         opt = optim.SGD(net.parameters(), lr=5e-1)
+        
+   ### test the model
+    test_results = net.test(X_test, y_test, criterion)
 
     ### train the model
     net.train(X_train, y_train, opt, criterion)
 
-    ### test the model
-    test_results = net.test(X_test, y_test, criterion)
-
+ 
     ### return the new weights and the test results
     return [net.get_params(), test_results, num_samples]

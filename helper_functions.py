@@ -44,3 +44,19 @@ def average(in_params, set_sizes, class_imbalances, dataset, use_sizes= False, u
             parameters[param] += weights[i] * in_params[i][param]
 
     return parameters
+
+
+
+def get_datasets(dataset, class_imbalance = False, sample_imbalance = False):
+    if dataset == 'banana':
+        datasets =  ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)]
+    elif dataset == 'MNIST':
+        datasets= ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST/MNIST_dataset_client" + str(i) + ".csv" for i in range(10)]
+    elif dataset == 'MNIST_2class_IID':
+        if class_imbalance:
+            datasets = ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_class_imbalance/MNIST_2Class_class_imbalance_client" + str(i) + ".csv" for i in range(10)]
+        elif sample_imbalance:
+            datasets =["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_Sample_Imbalance/MNIST_2Class_sample_imbalance_client" + str(i) + ".csv" for i in range(10)]
+        else:
+            datasets= ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_IID/MNIST_2Class_IID_client" + str(i) + ".csv" for i in range(10)]
+    return datasets
