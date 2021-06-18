@@ -23,7 +23,7 @@ class model(nn.Module):
             self.fc1 = nn.Linear(28*28, 100)
             self.relu1 = nn.ReLU()
             self.fc2 = nn.Linear(100,2)
-        print(self.state_dict())
+        #print(self.state_dict())
 
     #forward pass through the net
     def forward(self, input):
@@ -39,6 +39,10 @@ class model(nn.Module):
 
     def train(self, X_train, y_train, optimizer, criterion):
     #print(X_train)
+        not_yet_true = False
+        lr = 0e-1
+        c = 0
+        ci = 0
     #iterate through data
     #for x, y in zip(X_train, y_train):
         # zero the optimizer gradients
@@ -53,7 +57,11 @@ class model(nn.Module):
         #print(out)
         loss = criterion(out, y_train)
         loss.backward()
-        optimizer.step()
+        if not_yet_true : 
+            for param in self.parameters():
+                param = param - lr  * (param.grad + c - ci)
+        else : 
+            optimizer.step()
 
     def test(self, X_test, y_test, criterion):
         correct = 0

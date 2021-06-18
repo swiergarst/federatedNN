@@ -53,6 +53,7 @@ def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset =
         opt = optim.SGD(net.parameters(), lr=5e-1)
         
    ### test the model
+   # we test before training such that the same model is used as in the server
     test_results = net.test(X_test, y_test, criterion)
 
     ### train the model

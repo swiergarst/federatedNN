@@ -18,7 +18,7 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average, get_datasets
+from helper_functions import average, get_datasets, get_config
 start_time = time.time()
 ### connect to server
 
@@ -38,79 +38,31 @@ client.setup_encryption(None)
 
 ### parameter settings
 
-#architecture array will have the following format:
-# [layer_0_input_dim, layer_1_input_dim, .. , layer_n_input_dim, layer_n_output_dim]
-# so if the array is of length 2 there will be a single layer, 3 params equals 2 layers with the second param the size of the second layer, etc
-# this is not counting the output as a layer    
-
-architecture = np.array([2,4,2])
+#torch
+torch.manual_seed(42)
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 
 
 ids = [i for i in range(1,11)]
 
-num_global_rounds = 100
-num_clients = 10
+
+#dataset
 dataset = 'MNIST_2class_IID'
 class_imbalance = False
 sample_imbalance = True
 
-torch.manual_seed(42)
-#create the weights and biases
-if dataset == 'banana':
-    parameters= {
-        'fc1.weight' : torch.randn((4,2), dtype=torch.double),
-        'fc1.bias' : torch.randn((4), dtype=torch.double),
-        'fc2.weight' : torch.randn((2,4), dtype=torch.double),
-        'fc2.bias' : torch.randn((2), dtype=torch.double)
-    }
-elif dataset == 'MNIST' : 
-# mnist parameters
-    parameters= {
-        'fc1.weight' : torch.randn((100,28*28), dtype=torch.double),
-        'fc1.bias' : torch.randn((100), dtype=torch.double),
-        'fc2.weight' : torch.randn((10,100), dtype=torch.double),
-        'fc2.bias' : torch.randn((10), dtype=torch.double)
-    }
-elif dataset == 'MNIST_2class_IID' : 
-    parameters = {
-        'fc1.weight' : torch.randn((100,28*28), dtype=torch.double),
-        'fc1.bias' : torch.randn((100), dtype=torch.double),
-        'fc2.weight' : torch.randn((2,100), dtype=torch.double),
-        'fc2.bias' : torch.randn((2), dtype=torch.double)
-    }
+datasets, parameters, X_test, y_test = get_config(dataset,class_imbalance, sample_imbalance)
 
+#federated settings
+num_global_rounds = 100
+num_clients = 10
 
+# arrays to store results
 acc_results = np.zeros((num_clients, num_global_rounds))
 complete_test_results = np.empty((1, num_global_rounds))
-### create a model for 'global' testing
-### also get the full testing data
-# TODO: rewrite this to a function
-if dataset == 'MNIST' : 
-    MNIST_test = torch.load("/home/swier/Documents/afstuderen/MNIST/processed/test.pt")
-    X_test = MNIST_test[0].flatten(start_dim=1)/255
-    y_test = MNIST_test[1]
-elif dataset == 'MNIST_2class_IID' :
-    datasets = get_datasets(dataset, class_imbalance, sample_imbalance)
-    datasets = ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_IID/MNIST_2Class_IID_client" + str(i) + ".csv" for i in range(10)]   
-    dim_num = 784
-    dims = ['pixel' + str(i) for i in range(dim_num)]
 
-    for i,  set in enumerate(datasets):
-        data = pd.read_csv(set)
-        X_test_partial = data.loc[data['test/train'] == 'test'][dims].values
-        y_test_partial = data.loc[data['test/train'] == 'test']['label'].values
-        if i == 0:
-            X_test = X_test_partial
-            y_test = y_test_partial
-        else:
-            X_test_arr = np.concatenate((X_test, X_test_partial))
-            y_test_arr = np.concatenate((y_test, y_test_partial))
-
-    X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
-    y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
-
+#test model for global testing
 testModel = model(dataset)
 testModel.double()
 
@@ -130,8 +82,8 @@ for round in range(num_global_rounds):
                 'dataset' : dataset
             }
         },
-        name = "sample imbalance, truly no comp round " + str(round),
-        image = "sgarst/federated-learning:nnTest",
+        name = "class imbalance, no comp round " + str(round),
+        image = "sgarst/federated-learning:2ClassNN1",
         organization_ids=ids,
         collaboration_id= 1
     )
