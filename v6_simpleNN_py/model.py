@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-
+import sys
 
 
 
@@ -39,17 +39,12 @@ class model(nn.Module):
 
     def train(self, X_train, y_train, optimizer, criterion):
     #print(X_train)
-        not_yet_true = False
-        lr = 0e-1
+        not_yet_true = True
+        lr = 5e-1
         c = 0
         ci = 0
     #iterate through data
-    #for x, y in zip(X_train, y_train):
         # zero the optimizer gradients
-        #print(y)
-        #print(X_train)
-        #y = nn.functional.one_hot(y_train, num_classes=2)
-        #print(y)
         optimizer.zero_grad()
         #print(datapoint)
         ### forward pass, backward pass, optimizer step
@@ -58,10 +53,20 @@ class model(nn.Module):
         loss = criterion(out, y_train)
         loss.backward()
         if not_yet_true : 
-            for param in self.parameters():
-                param = param - lr  * (param.grad + c - ci)
+            fc1_weight = self.fc1.weight - lr * (self.fc1.weight.grad + c - ci)
+            fc1_bias = self.fc1.bias - lr * (self.fc1.bias.grad + c - ci)
+            fc2_weight = self.fc2.weight - lr * (self.fc2.weight.grad + c - ci)
+            fc2_bias = self.fc2.bias - lr * (self.fc2.bias.grad + c - ci)
+            param_dict = {
+                'fc1.weight' : fc1_weight,
+                'fc1.bias' : fc1_bias,
+                'fc2.weight' : fc2_weight,
+                'fc2.bias' : fc2_bias
+            }
+            self.set_params(param_dict)
         else : 
             optimizer.step()
+        #sys.exit()
 
     def test(self, X_test, y_test, criterion):
         correct = 0

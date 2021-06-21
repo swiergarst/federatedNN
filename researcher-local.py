@@ -28,13 +28,13 @@ optimizer = 'SGD'
 
 #dataset
 dataset = 'MNIST_2class_IID'
-class_imbalance = True
+class_imbalance = False
 sample_imbalance = False
 
 datasets, parameters, X_test, y_test = get_config(dataset,class_imbalance, sample_imbalance)
 
 #federated settings
-num_global_rounds = 20
+num_global_rounds = 5
 num_clients = 10
 
 #test model for global testing
@@ -44,6 +44,7 @@ testModel.double()
 # arrays to store results
 acc_results = np.zeros((num_clients, num_global_rounds))
 global_acc_results = np.zeros((num_global_rounds))
+array_save = False
 
 ### connect to server
 client = ClientMockProtocol(
@@ -84,11 +85,12 @@ for round in range(num_global_rounds):
     testModel.set_params(parameters)
     global_acc_results[round]  = testModel.test(X_test, y_test, criterion)
 
-with open ("class_imb_no_comp_local.npy", 'wb') as f:
-    np.save(f, acc_results)
+if array_save:
+    with open ("class_imb_no_comp_local.npy", 'wb') as f:
+        np.save(f, acc_results)
 
-with open ("class_imb_no_comp_global.npy", 'wb') as f2:
-    np.save(f2, global_acc_results)
+    with open ("class_imb_no_comp_global.npy", 'wb') as f2:
+        np.save(f2, global_acc_results)
 
 print(acc_results)
 print(global_acc_results)
