@@ -66,7 +66,7 @@ complete_test_results = np.empty((num_runs, num_global_rounds))
 
 ### main loop
 for run in range(num_runs):
-    torch.manual_seed(run + 5)
+    torch.manual_seed(run)
     datasets, parameters, X_test, y_test = get_config(dataset,class_imbalance, sample_imbalance)
     #test model for global testing
     testModel = model(dataset)
@@ -122,10 +122,10 @@ for run in range(num_runs):
 
 
 ### save arrays to files
-with open ("IID_no_comp_local_seed59.npy", 'wb') as f:
+with open ("IID_no_comp_local_seed03.npy", 'wb') as f:
     np.save(f, acc_results)
 
-with open ("IID_no_comp_global_seed59.npy", 'wb') as f2:
+with open ("IID_no_comp_global_seed03.npy", 'wb') as f2:
     np.save(f2, complete_test_results)
 
 print(repr(acc_results))

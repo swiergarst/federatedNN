@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import numpy as np
 import sys
 
 
@@ -9,9 +10,10 @@ import sys
 
 
 class model(nn.Module):
-    def __init__(self, dataset='banana'):
+    def __init__(self, dataset):
         super(model, self).__init__()
         self.dataset = dataset
+        self.ci = {}
         if dataset == "banana":
             self.fc1 = nn.Linear(2,4)
             self.fc2 = nn.Linear(4,2)
@@ -23,7 +25,12 @@ class model(nn.Module):
             self.fc1 = nn.Linear(28*28, 100)
             self.relu1 = nn.ReLU()
             self.fc2 = nn.Linear(100,2)
-        #print(self.state_dict())
+
+        params = self.get_params()
+
+        for param in params:
+            self.ci[param] = torch.zeros_like(params[param])
+
 
     #forward pass through the net
     def forward(self, input):
@@ -37,12 +44,8 @@ class model(nn.Module):
             return self.fc2(y1)
 
 
-    def train(self, X_train, y_train, optimizer, criterion):
+    def train(self, X_train, y_train, optimizer, criterion, lr, c,  scaffold):
     #print(X_train)
-        not_yet_true = True
-        lr = 5e-1
-        c = 0
-        ci = 0
     #iterate through data
         # zero the optimizer gradients
         optimizer.zero_grad()
@@ -52,18 +55,8 @@ class model(nn.Module):
         #print(out)
         loss = criterion(out, y_train)
         loss.backward()
-        if not_yet_true : 
-            fc1_weight = self.fc1.weight - lr * (self.fc1.weight.grad + c - ci)
-            fc1_bias = self.fc1.bias - lr * (self.fc1.bias.grad + c - ci)
-            fc2_weight = self.fc2.weight - lr * (self.fc2.weight.grad + c - ci)
-            fc2_bias = self.fc2.bias - lr * (self.fc2.bias.grad + c - ci)
-            param_dict = {
-                'fc1.weight' : fc1_weight,
-                'fc1.bias' : fc1_bias,
-                'fc2.weight' : fc2_weight,
-                'fc2.bias' : fc2_bias
-            }
-            self.set_params(param_dict)
+        if scaffold :
+            self.scaffold_update(lr, c)
         else : 
             optimizer.step()
         #sys.exit()
@@ -92,3 +85,33 @@ class model(nn.Module):
         #    parameters.append(layer.state_dict())
         #return parameters
         
+    def scaffold_update(self, lr, c):
+            param_dict_test = {
+                'fc1.weight' : self.fc1.weight,
+                'fc1.bias' : self.fc1.bias,
+                'fc2.weight' : self.fc2.weight,
+                'fc2.bias' : self.fc2.bias
+            }
+            fc1_weight = self.fc1.weight - lr * (self.fc1.weight.grad + c['fc1.weight'] - self.ci['fc1.weight'])
+            fc1_bias = self.fc1.bias - lr * (self.fc1.bias.grad + c['fc1.bias'] - self.ci['fc1.bias'])
+            fc2_weight = self.fc2.weight - lr * (self.fc2.weight.grad + c['fc2.weight'] - self.ci['fc2.weight'])
+            fc2_bias = self.fc2.bias - lr * (self.fc2.bias.grad + c['fc2.bias'] - self.ci['fc2.bias'])
+
+            
+            param_dict = {
+                'fc1.weight' : fc1_weight,
+                'fc1.bias' : fc1_bias,
+                'fc2.weight' : fc2_weight,
+                'fc2.bias' : fc2_bias
+            }
+            #print(param_dict_test)
+            ##print(param_dict)
+            old_params = self.get_params()
+            self.set_params(param_dict)
+            #print(lr)
+            
+            self.ci['fc1.weight'] = self.ci['fc1.weight'] - c['fc1.weight'] + (1/lr) * (self.fc1.weight - old_params['fc1.weight']) 
+            self.ci['fc1.bias'] = self.ci['fc1.bias'] - c['fc1.bias'] + (1/lr) * (self.fc1.bias - old_params['fc1.bias']) 
+            self.ci['fc2.weight'] = self.ci['fc2.weight'] - c['fc2.weight'] + (1/lr) * (self.fc2.weight - old_params['fc2.weight']) 
+            self.ci['fc2.bias'] = self.ci['fc2.bias'] - c['fc2.bias'] + (1/lr) * (self.fc2.bias - old_params['fc2.bias']) 
+            

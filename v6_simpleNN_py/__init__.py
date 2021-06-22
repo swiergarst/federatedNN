@@ -15,7 +15,7 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset = 'banana'):
+def RPC_train_and_test(data, parameters, criterion, lr = 0e5, scaffold = False, c = None,  optimizer = 'SGD', dataset = 'banana'):
     ### create net from given architeture
     net = model(dataset)
     net = net.double() #apparently I need this
@@ -57,8 +57,8 @@ def RPC_train_and_test(data, parameters, criterion, optimizer = 'SGD', dataset =
     test_results = net.test(X_test, y_test, criterion)
 
     ### train the model
-    net.train(X_train, y_train, opt, criterion)
+    net.train(X_train, y_train, opt, criterion, lr, c, scaffold)
 
  
     ### return the new weights and the test results
-    return [net.get_params(), test_results, num_samples]
+    return [net.get_params(), test_results, num_samples, net.ci]
