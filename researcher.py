@@ -18,7 +18,7 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average, get_datasets, get_config
+from helper_functions import average, get_datasets, get_config, scaffold
 start_time = time.time()
 ### connect to server
 
@@ -45,6 +45,7 @@ optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 5e-1
 use_scaffold=True
+use_c = True
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
@@ -69,11 +70,12 @@ complete_test_results = np.empty((num_runs, num_global_rounds))
 ### main loop
 for run in range(num_runs):
     torch.manual_seed(run)
-    datasets, parameters, X_test, y_test = get_config(dataset,class_imbalance, sample_imbalance)
+    datasets, parameters, X_test, y_test, c, ci = get_config(dataset,class_imbalance, sample_imbalance)
     #test model for global testing
     testModel = model(dataset)
     testModel.double()
     for round in range(num_global_rounds):
+        old_ci = ci
         print("starting round", round)
         ### request task from clients
         round_task = client.post_task(
@@ -87,11 +89,12 @@ for run in range(num_runs):
                     'lr' : lr_local,
                     'scaffold' : use_scaffold,
                     'c' : c,
-                    'dataset' : dataset
+                    'dataset' : dataset,
+                    'use_c' : use_c
                 }
             },
             name = "class imbalance, no comp round " + str(round),
-            image = "sgarst/federated-learning:2ClassNN1",
+            image = "sgarst/federated-learning:2ClassNN2",
             organization_ids=ids,
             collaboration_id= 1
         )
@@ -119,7 +122,12 @@ for run in range(num_runs):
         local_parameters = np.array(results[:,0])
         acc_results[run, :, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
-        parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes=False)
+        ci = results[:,3]
+        
+        if use_scaffold:
+            parameters, c = scaffold(dataset, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
+        else:
+            parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes=False)
 
         # 'global' test
         testModel.set_params(parameters)
