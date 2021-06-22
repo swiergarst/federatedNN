@@ -1,3 +1,4 @@
+from matplotlib import use
 import numpy as np
 import pandas as pd
 import torch
@@ -25,7 +26,7 @@ def average(in_params, set_sizes, class_imbalances, dataset, use_sizes= False, u
     return parameters
 
 #scaffold implementation
-def scaffold(dataset, global_parameters, local_parameters, c, old_local_c, local_c, lr):
+def scaffold(dataset, global_parameters, local_parameters, c, old_local_c, local_c, lr, use_c = True):
     num_clients = local_parameters.size
     parameters = init_params(dataset,  True)
     for param in parameters.keys():
@@ -37,8 +38,8 @@ def scaffold(dataset, global_parameters, local_parameters, c, old_local_c, local
             c_agg += local_c[i][param] - old_local_c[i][param]
         #calculate new weight value
         parameters[param] = global_parameters[param] + (lr/num_clients) * param_agg 
-
-        c[param] = c[param] + (1/num_clients) * c_agg
+        if use_c:
+            c[param] = c[param] + (1/num_clients) * c_agg
     return parameters, c
 
 def get_datasets(dataset, class_imbalance = False, sample_imbalance = False):

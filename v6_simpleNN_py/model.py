@@ -44,7 +44,7 @@ class model(nn.Module):
             return self.fc2(y1)
 
 
-    def train(self, X_train, y_train, optimizer, criterion, lr, c,  scaffold):
+    def train(self, X_train, y_train, optimizer, criterion, lr, c,  scaffold, use_c):
     #print(X_train)
     #iterate through data
         # zero the optimizer gradients
@@ -56,7 +56,7 @@ class model(nn.Module):
         loss = criterion(out, y_train)
         loss.backward()
         if scaffold :
-            self.scaffold_update(lr, c)
+            self.scaffold_update(lr, c, use_c)
         else : 
             optimizer.step()
         #sys.exit()
@@ -85,13 +85,7 @@ class model(nn.Module):
         #    parameters.append(layer.state_dict())
         #return parameters
         
-    def scaffold_update(self, lr, c):
-            param_dict_test = {
-                'fc1.weight' : self.fc1.weight,
-                'fc1.bias' : self.fc1.bias,
-                'fc2.weight' : self.fc2.weight,
-                'fc2.bias' : self.fc2.bias
-            }
+    def scaffold_update(self, lr, c, use_c):
             fc1_weight = self.fc1.weight - lr * (self.fc1.weight.grad + c['fc1.weight'] - self.ci['fc1.weight'])
             fc1_bias = self.fc1.bias - lr * (self.fc1.bias.grad + c['fc1.bias'] - self.ci['fc1.bias'])
             fc2_weight = self.fc2.weight - lr * (self.fc2.weight.grad + c['fc2.weight'] - self.ci['fc2.weight'])
@@ -109,9 +103,9 @@ class model(nn.Module):
             old_params = self.get_params()
             self.set_params(param_dict)
             #print(lr)
-            
-            self.ci['fc1.weight'] = self.ci['fc1.weight'] - c['fc1.weight'] + (1/lr) * (self.fc1.weight - old_params['fc1.weight']) 
-            self.ci['fc1.bias'] = self.ci['fc1.bias'] - c['fc1.bias'] + (1/lr) * (self.fc1.bias - old_params['fc1.bias']) 
-            self.ci['fc2.weight'] = self.ci['fc2.weight'] - c['fc2.weight'] + (1/lr) * (self.fc2.weight - old_params['fc2.weight']) 
-            self.ci['fc2.bias'] = self.ci['fc2.bias'] - c['fc2.bias'] + (1/lr) * (self.fc2.bias - old_params['fc2.bias']) 
-            
+            if use_c:
+                self.ci['fc1.weight'] = self.ci['fc1.weight'] - c['fc1.weight'] + (1/lr) * (self.fc1.weight - old_params['fc1.weight']) 
+                self.ci['fc1.bias'] = self.ci['fc1.bias'] - c['fc1.bias'] + (1/lr) * (self.fc1.bias - old_params['fc1.bias']) 
+                self.ci['fc2.weight'] = self.ci['fc2.weight'] - c['fc2.weight'] + (1/lr) * (self.fc2.weight - old_params['fc2.weight']) 
+                self.ci['fc2.bias'] = self.ci['fc2.bias'] - c['fc2.bias'] + (1/lr) * (self.fc2.bias - old_params['fc2.bias']) 
+                

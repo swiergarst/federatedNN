@@ -27,6 +27,7 @@ optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 5e-1
 use_scaffold = True
+use_c = True
 #c = np.zeros(4)
 
 #federated settings
@@ -77,6 +78,7 @@ for round in range(num_global_rounds):
                 'scaffold' : use_scaffold,
                 'c' : c, 
                 'dataset' : dataset, 
+                'use_c' : use_c
                 }
         },
         organization_ids=org_ids
@@ -94,7 +96,7 @@ for round in range(num_global_rounds):
 
 
     if use_scaffold:
-        parameters, c = scaffold(dataset, parameters, local_parameters, c, old_ci, ci, lr_global)
+        parameters, c = scaffold(dataset, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
         #parameters = average(local_parameters, dataset_sizes, None, dataset,use_sizes=False, use_imbalances=False)
     else:
         parameters = average(local_parameters, dataset_sizes, None, dataset,use_sizes=False, use_imbalances=False)
