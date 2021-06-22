@@ -42,20 +42,22 @@ client.setup_encryption(None)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-
+lr_local = 5e-1
+lr_global = 5e-1
+use_scaffold=True
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset
 dataset = 'MNIST_2class_IID'
-class_imbalance = False
+class_imbalance = True
 sample_imbalance = False
 
 
 #federated settings
 num_global_rounds = 100
 num_clients = 10
-num_runs = 4
+num_runs = 1
 
 # arrays to store results
 acc_results = np.zeros((num_runs, num_clients, num_global_rounds))
@@ -82,6 +84,9 @@ for run in range(num_runs):
                     'parameters' : parameters,
                     'criterion': criterion,
                     'optimizer': optimizer,
+                    'lr' : lr_local,
+                    'scaffold' : use_scaffold,
+                    'c' : c,
                     'dataset' : dataset
                 }
             },
@@ -122,10 +127,10 @@ for run in range(num_runs):
 
 
 ### save arrays to files
-with open ("IID_no_comp_local_seed03.npy", 'wb') as f:
+with open ("w9/class_imb_with_comp_local.npy", 'wb') as f:
     np.save(f, acc_results)
 
-with open ("IID_no_comp_global_seed03.npy", 'wb') as f2:
+with open ("w9/class_imb_with_comp_global.npy", 'wb') as f2:
     np.save(f2, complete_test_results)
 
 print(repr(acc_results))
