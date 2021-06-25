@@ -104,8 +104,8 @@ class model(nn.Module):
             self.set_params(param_dict)
             #print(lr)
             if use_c:
-                self.ci['fc1.weight'] = self.ci['fc1.weight'] - c['fc1.weight'] + (1/lr) * (self.fc1.weight - old_params['fc1.weight']) 
-                self.ci['fc1.bias'] = self.ci['fc1.bias'] - c['fc1.bias'] + (1/lr) * (self.fc1.bias - old_params['fc1.bias']) 
-                self.ci['fc2.weight'] = self.ci['fc2.weight'] - c['fc2.weight'] + (1/lr) * (self.fc2.weight - old_params['fc2.weight']) 
-                self.ci['fc2.bias'] = self.ci['fc2.bias'] - c['fc2.bias'] + (1/lr) * (self.fc2.bias - old_params['fc2.bias']) 
+                self.ci['fc1.weight'] = self.ci['fc1.weight'] - c['fc1.weight'] + (1/lr) * (old_params['fc1.weight'] - self.fc1.weight) 
+                self.ci['fc1.bias'] = self.ci['fc1.bias'] - c['fc1.bias'] + (1/lr) * (old_params['fc1.bias'] - self.fc1.bias) 
+                self.ci['fc2.weight'] = self.ci['fc2.weight'] - c['fc2.weight'] + (1/lr) * (old_params['fc2.weight'] - self.fc2.weight) 
+                self.ci['fc2.bias'] = self.ci['fc2.bias'] - c['fc2.bias'] + (1/lr) * (old_params['fc2.bias'] - self.fc2.bias) 
                 

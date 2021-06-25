@@ -51,26 +51,26 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset
 dataset = 'MNIST_2class_IID'
-class_imbalance = True
+class_imbalance = False
 sample_imbalance = False
 
 
 #federated settings
 num_global_rounds = 100
 num_clients = 10
-num_runs = 1
+num_runs = 4
 
 # arrays to store results
 acc_results = np.zeros((num_runs, num_clients, num_global_rounds))
 complete_test_results = np.empty((num_runs, num_global_rounds))
-
+save_file = True
 
 
 
 ### main loop
 for run in range(num_runs):
     torch.manual_seed(run)
-    datasets, parameters, X_test, y_test, c, ci = get_config(dataset,class_imbalance, sample_imbalance)
+    datasets, parameters, X_test, y_test, c, ci = get_config(dataset, num_clients, class_imbalance, sample_imbalance)
     #test model for global testing
     testModel = model(dataset)
     testModel.double()
@@ -105,7 +105,7 @@ for run in range(num_runs):
         #print(res)
         while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 20):
             print("waiting...")
-            time.sleep(5)
+            time.sleep(1)
             res = client.get_results(task_id=round_task.get("id"))
             attempts += 1
 
@@ -122,8 +122,9 @@ for run in range(num_runs):
         local_parameters = np.array(results[:,0])
         acc_results[run, :, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
-        ci = results[:,3]
-        
+        if use_scaffold:
+            ci = results[:,3]
+
         if use_scaffold:
             parameters, c = scaffold(dataset, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
         else:
@@ -134,19 +135,20 @@ for run in range(num_runs):
         complete_test_results[run ,round]  = testModel.test(X_test, y_test, criterion)
 
 
-### save arrays to files
-with open ("w9/class_imb_with_comp_local.npy", 'wb') as f:
-    np.save(f, acc_results)
+if save_file:
+    ### save arrays to files
+    with open ("w9/IID_with_comp_local_seed0_3.npy", 'wb') as f:
+        np.save(f, acc_results)
 
-with open ("w9/class_imb_with_comp_global.npy", 'wb') as f2:
-    np.save(f2, complete_test_results)
+    with open ("w9/IID_with_comp_global_seed0_3.npy", 'wb') as f2:
+        np.save(f2, complete_test_results)
 
 print(repr(acc_results))
 print(repr(complete_test_results))
 #print(np.mean(acc_results, axis=0))
 print("final runtime", (time.time() - start_time)/60)
 x = np.arange(num_global_rounds)
-#plt.plot(x, np.mean(acc_results, axis=0))
-#plt.plot(x, complete_test_results)
-#plt.show()
+plt.plot(x, np.mean(acc_results, axis=1, keepdims=False)[0,:])
+plt.plot(x, complete_test_results)
+plt.show()
     ### generate new model parameters
