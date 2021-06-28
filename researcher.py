@@ -18,7 +18,7 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average, get_datasets, get_config, scaffold
+from helper_functions import average, get_datasets, get_config, scaffold, heatmap
 start_time = time.time()
 ### connect to server
 
@@ -51,21 +51,21 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset
 dataset = 'MNIST_2class_IID'
-class_imbalance = False
+class_imbalance = True
 sample_imbalance = False
 
 
 #federated settings
 num_global_rounds = 100
 num_clients = 10
-num_runs = 4
+num_runs = 1
 
 # arrays to store results
 acc_results = np.zeros((num_runs, num_clients, num_global_rounds))
 complete_test_results = np.empty((num_runs, num_global_rounds))
 save_file = True
-
-
+prevmap = heatmap(num_clients, num_global_rounds)
+newmap = heatmap(num_clients, num_global_rounds)
 
 ### main loop
 for run in range(num_runs):
@@ -122,6 +122,7 @@ for run in range(num_runs):
         local_parameters = np.array(results[:,0])
         acc_results[run, :, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
+        prevmap.save_round(round, local_parameters, parameters)
         if use_scaffold:
             ci = results[:,3]
 
@@ -130,6 +131,7 @@ for run in range(num_runs):
         else:
             parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes=False)
 
+        newmap.save_round(round, local_parameters, parameters)
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[run ,round]  = testModel.test(X_test, y_test, criterion)
@@ -137,10 +139,10 @@ for run in range(num_runs):
 
 if save_file:
     ### save arrays to files
-    with open ("w9/IID_with_comp_local_seed0_3.npy", 'wb') as f:
+    with open ("w10/class_imb_with_comp_local_seed0.npy", 'wb') as f:
         np.save(f, acc_results)
 
-    with open ("w9/IID_with_comp_global_seed0_3.npy", 'wb') as f2:
+    with open ("w10/class_imb_with_comp_cfixed_global_seed0.npy", 'wb') as f2:
         np.save(f2, complete_test_results)
 
 print(repr(acc_results))
@@ -148,7 +150,13 @@ print(repr(complete_test_results))
 #print(np.mean(acc_results, axis=0))
 print("final runtime", (time.time() - start_time)/60)
 x = np.arange(num_global_rounds)
+prevmap.save_map("w10/ci_wc_prevmap_seed0.npy")
+newmap.save_map("w10/ci_wc_newmap_seed0.npy")
+prevmap.show_map()
+newmap.show_map()
+'''
 plt.plot(x, np.mean(acc_results, axis=1, keepdims=False)[0,:])
 plt.plot(x, complete_test_results)
 plt.show()
+'''
     ### generate new model parameters

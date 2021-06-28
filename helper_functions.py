@@ -1,7 +1,8 @@
-from matplotlib import use
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
+import numpy.linalg as LA
 
 
 #fedAvg implementation
@@ -146,3 +147,64 @@ def get_c(parameters, num_clients):
     }
     ci = [c] * num_clients
     return c, ci
+
+class heatmap():
+    def __init__(self, num_clients, num_rounds):
+        self.map = np.empty((num_clients, num_rounds))
+        self.num_clients = num_clients
+        self.num_rounds = num_rounds
+
+
+    def save_round(self, round, client_params, global_param_dict):
+        param_size = self.calc_param_size(global_param_dict)
+        global_arr = self.dict_to_arr(param_size, global_param_dict)
+        for client_idx, client in enumerate(client_params):
+            client_arr = self.dict_to_arr(param_size, client)
+            self.map[client_idx, round] =  LA.norm(global_arr - client_arr)
+
+    def dict_to_arr(self, arr_size, dict):
+        pointer = 0
+        return_array = np.zeros((arr_size))
+        for key in dict.keys():
+            tmp_arr = dict[key].numpy().reshape(-1)
+            return_array[pointer:pointer+tmp_arr.size] = tmp_arr
+            pointer += tmp_arr.size
+        return return_array
+    
+    def calc_param_size(self, param_dict):
+        size = 0
+        for key in param_dict.keys():
+            key_size = 1
+            for dict_size in param_dict[key].size():
+                key_size *= dict_size
+            size += key_size
+        return(size)
+
+
+    def show_map(self):
+        fig, ax = plt.subplots()
+        final_map = self.map / LA.norm(self.map, axis=0)
+        print(self.map)
+        print(LA.norm(self.map, axis=0))
+        im = ax.imshow(final_map)
+        ax.set_xticks(np.arange(self.map.shape[1]))
+        ax.set_yticks(np.arange(self.map.shape[0]))
+        xlabels = np.arange(self.num_rounds)
+        ylabels = ["client" + str(i) for i in range(self.num_clients)]
+        ax.set_xticklabels(xlabels)
+        ax.set_yticklabels(ylabels)
+
+        # Rotate the tick labels and set their alignment.
+        plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
+        rotation_mode="anchor")
+
+        for i in range(self.map.shape[0]):
+            for j in range(self.map.shape[1]):
+                text = ax.text(j,i, round(final_map[i,j], 2), ha="center", va="center", color="b")
+        
+        #print(LA.norm(self.map))
+        plt.show()
+
+        def save_map(self, path):
+            with open(path) as f:
+                np.save(f, self.map)
