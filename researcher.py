@@ -58,7 +58,7 @@ sample_imbalance = False
 #federated settings
 num_global_rounds = 100
 num_clients = 10
-num_runs = 1
+num_runs = 4
 
 # arrays to store results
 acc_results = np.zeros((num_runs, num_clients, num_global_rounds))
@@ -69,7 +69,8 @@ newmap = heatmap(num_clients, num_global_rounds)
 
 ### main loop
 for run in range(num_runs):
-    torch.manual_seed(run)
+    seed = run + 10
+    torch.manual_seed(seed)
     datasets, parameters, X_test, y_test, c, ci = get_config(dataset, num_clients, class_imbalance, sample_imbalance)
     #test model for global testing
     testModel = model(dataset)
@@ -135,14 +136,16 @@ for run in range(num_runs):
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[run ,round]  = testModel.test(X_test, y_test, criterion)
+    prevmap.save_map("w10/ci_wc_prevmap_seed" + str(seed) + ".npy")
+    newmap.save_map("w10/ci_wc_newmap_seed" + str(seed) + ".npy")
 
 
 if save_file:
     ### save arrays to files
-    with open ("w10/class_imb_with_comp_local_seed0.npy", 'wb') as f:
+    with open ("w10/class_imb_with_comp_local_seed" + str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f:
         np.save(f, acc_results)
 
-    with open ("w10/class_imb_with_comp_cfixed_global_seed0.npy", 'wb') as f2:
+    with open ("w10/class_imb_with_comp_global_seed"+ str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f2:
         np.save(f2, complete_test_results)
 
 print(repr(acc_results))
@@ -150,8 +153,7 @@ print(repr(complete_test_results))
 #print(np.mean(acc_results, axis=0))
 print("final runtime", (time.time() - start_time)/60)
 x = np.arange(num_global_rounds)
-prevmap.save_map("w10/ci_wc_prevmap_seed0.npy")
-newmap.save_map("w10/ci_wc_newmap_seed0.npy")
+
 prevmap.show_map()
 newmap.show_map()
 '''

@@ -16,7 +16,7 @@ def master():
     pass
 
 def RPC_train_and_test(data, parameters):
-    model = SGDClassifier(loss="hinge", penalty="l2", max_iter = 1, warm_start=True, fit_intercept=True)
+    model = SGDClassifier(loss="hinge", penalty="l2", max_iter = 1, warm_start=True, fit_intercept=True, learning_rate='constant', eta0=0.05)
 
     model.coef_ = parameters[0]
     model.intercept_ = parameters[1]

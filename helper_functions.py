@@ -155,12 +155,21 @@ class heatmap():
         self.num_rounds = num_rounds
 
 
-    def save_round(self, round, client_params, global_param_dict):
-        param_size = self.calc_param_size(global_param_dict)
-        global_arr = self.dict_to_arr(param_size, global_param_dict)
+    def save_round(self, round, client_params, global_param_dict, is_dict = True):
+        if is_dict:
+            param_size = self.calc_param_size(global_param_dict)
+            global_arr = self.dict_to_arr(param_size, global_param_dict)
         for client_idx, client in enumerate(client_params):
-            client_arr = self.dict_to_arr(param_size, client)
+            if is_dict:
+                client_arr = self.dict_to_arr(param_size, client)
+            else: 
+                client_arr = client
+                global_arr = global_param_dict
             self.map[client_idx, round] =  LA.norm(global_arr - client_arr)
+
+    def save_round_arr(self, round, client_params, global_params):
+        for client_idx, client in enumerate(client_params):
+            self.map[client_idx, round] = LA.norm(global_params - client)
 
     def dict_to_arr(self, arr_size, dict):
         pointer = 0
@@ -205,6 +214,6 @@ class heatmap():
         #print(LA.norm(self.map))
         plt.show()
 
-        def save_map(self, path):
-            with open(path) as f:
-                np.save(f, self.map)
+    def save_map(self, path):
+        with open(path, 'wb') as f:
+            np.save(f, self.map)
