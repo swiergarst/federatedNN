@@ -1,6 +1,6 @@
 from sklearn.linear_model import SGDClassifier
 import pandas as pd
-
+import numpy as np
 
 
 
@@ -15,7 +15,8 @@ import pandas as pd
 def master():
     pass
 
-def RPC_train_and_test(data, parameters):
+def RPC_train_and_test(data, parameters, seed):
+    np.random.seed(seed)
     model = SGDClassifier(loss="hinge", penalty="l2", max_iter = 1, warm_start=True, fit_intercept=True, learning_rate='constant', eta0=0.05)
 
     model.coef_ = parameters[0]

@@ -18,7 +18,7 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average, get_datasets, get_config, scaffold, heatmap
+from helper_functions import average, get_datasets, get_config, scaffold, heatmap, get_save_str
 start_time = time.time()
 ### connect to server
 
@@ -44,33 +44,40 @@ criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 5e-1
-use_scaffold=True
-use_c = True
+
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
-#dataset
+#dataset and booleans
 dataset = 'MNIST_2class_IID'
-class_imbalance = True
-sample_imbalance = False
+week = "w11/"
 
+save_file = True
+class_imbalance = False
+sample_imbalance = True
+use_scaffold=False
+use_c = False
+use_sizes = True
+prefix = get_save_str(class_imbalance, sample_imbalance, use_scaffold, use_sizes)
 
 #federated settings
 num_global_rounds = 100
 num_clients = 10
 num_runs = 4
+seed_offset = 0
 
 # arrays to store results
 acc_results = np.zeros((num_runs, num_clients, num_global_rounds))
 complete_test_results = np.empty((num_runs, num_global_rounds))
-save_file = True
+
 prevmap = heatmap(num_clients, num_global_rounds)
 newmap = heatmap(num_clients, num_global_rounds)
-
+#if use_scaffold:
+cmap = heatmap(num_clients , num_global_rounds)
 ### main loop
 for run in range(num_runs):
-    seed = run + 10
-    torch.manual_seed(seed)
+    seed = run
+    torch.manual_seed(seed + seed_offset)
     datasets, parameters, X_test, y_test, c, ci = get_config(dataset, num_clients, class_imbalance, sample_imbalance)
     #test model for global testing
     testModel = model(dataset)
@@ -94,11 +101,12 @@ for run in range(num_runs):
                     'use_c' : use_c
                 }
             },
-            name = "class imbalance, no comp round " + str(round),
+            name =  prefix + ", round " + str(round),
             image = "sgarst/federated-learning:2ClassNN2",
             organization_ids=ids,
             collaboration_id= 1
         )
+        
         #print(round_task)
         info("Waiting for results")
         res = client.get_results(task_id=round_task.get("id"))
@@ -130,22 +138,25 @@ for run in range(num_runs):
         if use_scaffold:
             parameters, c = scaffold(dataset, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
         else:
-            parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes=False)
-
+            parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes= use_sizes)
+        if use_scaffold:
+            cmap.save_round(round, ci, c)
         newmap.save_round(round, local_parameters, parameters)
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[run ,round]  = testModel.test(X_test, y_test, criterion)
-    prevmap.save_map("w10/ci_wc_prevmap_seed" + str(seed) + ".npy")
-    newmap.save_map("w10/ci_wc_newmap_seed" + str(seed) + ".npy")
+    if use_scaffold:    
+        cmap.save_map(week + prefix + "cmap_seed" + str(seed) + ".npy")
+    prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
+    newmap.save_map(week + prefix + "nc_newmap_seed" + str(seed) + ".npy")
 
 
 if save_file:
     ### save arrays to files
-    with open ("w10/class_imb_with_comp_local_seed" + str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f:
+    with open (week + prefix + "local_seed" + str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f:
         np.save(f, acc_results)
 
-    with open ("w10/class_imb_with_comp_global_seed"+ str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f2:
+    with open (week + prefix + "nc_global_seed"+ str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f2:
         np.save(f2, complete_test_results)
 
 print(repr(acc_results))

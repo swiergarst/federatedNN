@@ -175,7 +175,7 @@ class heatmap():
         pointer = 0
         return_array = np.zeros((arr_size))
         for key in dict.keys():
-            tmp_arr = dict[key].numpy().reshape(-1)
+            tmp_arr = dict[key].detach().numpy().reshape(-1)
             return_array[pointer:pointer+tmp_arr.size] = tmp_arr
             pointer += tmp_arr.size
         return return_array
@@ -190,11 +190,11 @@ class heatmap():
         return(size)
 
 
-    def show_map(self):
+    def show_map(self, title = "", show_text=False):
         fig, ax = plt.subplots()
         final_map = self.map / LA.norm(self.map, axis=0)
-        print(self.map)
-        print(LA.norm(self.map, axis=0))
+        #print(self.map)
+        #print(LA.norm(self.map, axis=0))
         im = ax.imshow(final_map)
         ax.set_xticks(np.arange(self.map.shape[1]))
         ax.set_yticks(np.arange(self.map.shape[0]))
@@ -207,13 +207,37 @@ class heatmap():
         plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
         rotation_mode="anchor")
 
-        for i in range(self.map.shape[0]):
-            for j in range(self.map.shape[1]):
-                text = ax.text(j,i, round(final_map[i,j], 2), ha="center", va="center", color="b")
-        
+        if show_text:
+            for i in range(self.map.shape[0]):
+                for j in range(self.map.shape[1]):
+                    text = ax.text(j,i, round(final_map[i,j], 2), ha="center", va="center", color="b")
+            
         #print(LA.norm(self.map))
+        plt.xlabel("rounds")
+        plt.ylabel("clients")
+        plt.title(title)
+        plt.colorbar(im, shrink=0.5)
         plt.show()
 
     def save_map(self, path):
         with open(path, 'wb') as f:
             np.save(f, self.map)
+
+
+def get_save_str(c_i, s_i, u_sc, u_si):
+    if c_i:
+        str1 = "ci"
+    elif s_i:
+        str1 = "si"
+    else:
+        str1 = "IID"
+
+    if u_sc:
+        str2 = "scaf"
+    elif u_si:
+        str2 = "size_comp"
+    else:
+        str2 = "no_comp"
+
+    return (str1 + "_" + str2)
+    
