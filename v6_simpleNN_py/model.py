@@ -10,38 +10,62 @@ import sys
 
 
 class model(nn.Module):
-    def __init__(self, dataset):
+    def __init__(self, dataset, model_choice):
         super(model, self).__init__()
         self.dataset = dataset
         self.ci = {}
-        if dataset == "banana":
-            self.fc1 = nn.Linear(2,4)
-            self.fc2 = nn.Linear(4,2)
-        elif dataset == "MNIST":
-            self.fc1 = nn.Linear(28*28,100)
-            self.relu1 = nn.ReLU()
-            self.fc2 = nn.Linear(100,10)
-        elif dataset == "MNIST_2class_IID" : 
-            self.fc1 = nn.Linear(28*28, 100)
-            self.relu1 = nn.ReLU()
-            self.fc2 = nn.Linear(100,2)
+        self.model_choice = model_choice
+        if self.model_choice == "CNN":    
+            self.conv_layers, self.lin_layers = self.get_model(dataset)
+        else:
+            self.lin_layers = self.get_model(dataset)
 
         params = self.get_params()
 
         for param in params:
             self.ci[param] = torch.zeros_like(params[param])
 
-
+    def get_model(self, dataset):
+        if dataset == "banana":
+            return nn.Sequential(
+               nn.Linear(2,4),
+               nn.Linear(2,4) 
+            )
+        elif dataset == "MNIST":
+            return nn.Sequential(            
+                nn.Linear(28*28,100),
+                nn.ReLU(),
+                nn.Linear(100,10)
+            )
+        elif dataset == "MNIST_2class_IID":
+            if model == "FNN":
+                return nn.Sequential(
+                    nn.Linear(28*28, 100),
+                    nn.ReLU(),
+                    nn.Linear(100,2) 
+                )
+            elif self.model_choice == "CNN":
+                convLayers = nn.Sequential(
+                    nn.Conv2d(1,1, kernel_size=3, stride=1, padding=1),
+                    nn.MaxPool2d(kernel_size=2, stride=2)
+                )
+                linLayers = nn.Sequential(
+                    nn.Linear(196, 2)
+                    )
+                return convLayers, linLayers
+                
+            else :
+                raise ValueError("no known model selection supplied")
+        else:
+            raise ValueError("no known dataset supplied")
     #forward pass through the net
     def forward(self, input):
         #print(input)
-        if self.dataset == 'banana':
-            y1 = self.fc1(input)
-            return self.fc2(y1)
-        elif self.dataset == 'MNIST' or 'MNIST_2class_IID':
-            y1 = self.fc1(input)
-            y1 = self.relu1(y1)
-            return self.fc2(y1)
+        #print(input.shape)
+        if self.model_choice == "CNN":
+            input = self.conv_layers(input)
+            input = input.view(input.shape[0], -1)
+        return self.lin_layers(input)
 
 
     def train(self, X_train, y_train, optimizer, criterion, lr, c,  scaffold, use_c):
@@ -86,26 +110,12 @@ class model(nn.Module):
         #return parameters
         
     def scaffold_update(self, lr, c, use_c):
-            fc1_weight = self.fc1.weight - lr * (self.fc1.weight.grad + c['fc1.weight'] - self.ci['fc1.weight'])
-            fc1_bias = self.fc1.bias - lr * (self.fc1.bias.grad + c['fc1.bias'] - self.ci['fc1.bias'])
-            fc2_weight = self.fc2.weight - lr * (self.fc2.weight.grad + c['fc2.weight'] - self.ci['fc2.weight'])
-            fc2_bias = self.fc2.bias - lr * (self.fc2.bias.grad + c['fc2.bias'] - self.ci['fc2.bias'])
-
-            
-            param_dict = {
-                'fc1.weight' : fc1_weight,
-                'fc1.bias' : fc1_bias,
-                'fc2.weight' : fc2_weight,
-                'fc2.bias' : fc2_bias
-            }
-            #print(param_dict_test)
-            ##print(param_dict)
-            old_params = self.get_params()
-            self.set_params(param_dict)
-            #print(lr)
+        params = self.get_params()
+        updated_param_dict = {}
+        for para, param in zip(self.parameters(), params):
+            updated_param_dict[param] = params[param] - lr * (para.grad + c[param] - self.ci[param])
             if use_c:
-                self.ci['fc1.weight'] = self.ci['fc1.weight'] - c['fc1.weight'] + (1/lr) * (old_params['fc1.weight'] - self.fc1.weight) 
-                self.ci['fc1.bias'] = self.ci['fc1.bias'] - c['fc1.bias'] + (1/lr) * (old_params['fc1.bias'] - self.fc1.bias) 
-                self.ci['fc2.weight'] = self.ci['fc2.weight'] - c['fc2.weight'] + (1/lr) * (old_params['fc2.weight'] - self.fc2.weight) 
-                self.ci['fc2.bias'] = self.ci['fc2.bias'] - c['fc2.bias'] + (1/lr) * (old_params['fc2.bias'] - self.fc2.bias) 
-                
+                self.ci[param] = self.ci[param] - c[param] + (1/lr) * (params[param] - updated_param_dict[param])
+
+        self.set_params(updated_param_dict)
+        #print(lr)

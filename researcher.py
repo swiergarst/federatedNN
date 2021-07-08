@@ -26,8 +26,8 @@ start_time = time.time()
 print("Attempt login to Vantage6 API")
 client = Client("http://localhost", 5000, "/api")
 client.authenticate("researcher", "1234")
-
-client.setup_encryption(None)
+privkey = "/home/swier/.local/share/vantage6/node/privkey_testOrg0.pem"
+client.setup_encryption(privkey)
 
 
 #organizations = client.get_organizations_in_my_collaboration()
@@ -50,14 +50,15 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
 dataset = 'MNIST_2class_IID'
-week = "w11/"
+week = "../datafiles/w11/"
 
+model_choice = "CNN"
 save_file = True
 class_imbalance = False
 sample_imbalance = True
 use_scaffold=False
 use_c = False
-use_sizes = True
+use_sizes = False
 prefix = get_save_str(class_imbalance, sample_imbalance, use_scaffold, use_sizes)
 
 #federated settings
@@ -76,11 +77,11 @@ newmap = heatmap(num_clients, num_global_rounds)
 cmap = heatmap(num_clients , num_global_rounds)
 ### main loop
 for run in range(num_runs):
-    seed = run
-    torch.manual_seed(seed + seed_offset)
-    datasets, parameters, X_test, y_test, c, ci = get_config(dataset, num_clients, class_imbalance, sample_imbalance)
+    seed = run + seed_offset
+    torch.manual_seed(seed)
+    datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
     #test model for global testing
-    testModel = model(dataset)
+    testModel = model(dataset, model_choice)
     testModel.double()
     for round in range(num_global_rounds):
         old_ci = ci
@@ -94,6 +95,7 @@ for run in range(num_runs):
                     'parameters' : parameters,
                     'criterion': criterion,
                     'optimizer': optimizer,
+                    'model_choice' : model_choice,
                     'lr' : lr_local,
                     'scaffold' : use_scaffold,
                     'c' : c,
@@ -102,7 +104,7 @@ for run in range(num_runs):
                 }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:2ClassNN2",
+            image = "sgarst/federated-learning:2ClassNN3",
             organization_ids=ids,
             collaboration_id= 1
         )
@@ -112,7 +114,7 @@ for run in range(num_runs):
         res = client.get_results(task_id=round_task.get("id"))
         attempts=1
         #print(res)
-        while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 20):
+        while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 20000):
             print("waiting...")
             time.sleep(1)
             res = client.get_results(task_id=round_task.get("id"))
@@ -136,9 +138,9 @@ for run in range(num_runs):
             ci = results[:,3]
 
         if use_scaffold:
-            parameters, c = scaffold(dataset, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
+            parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
         else:
-            parameters = average(local_parameters, dataset_sizes, None, dataset, use_imbalances=False, use_sizes= use_sizes)
+            parameters = average(local_parameters, dataset_sizes, None, dataset, model_choice, use_imbalances=False, use_sizes= use_sizes)
         if use_scaffold:
             cmap.save_round(round, ci, c)
         newmap.save_round(round, local_parameters, parameters)
@@ -148,16 +150,15 @@ for run in range(num_runs):
     if use_scaffold:    
         cmap.save_map(week + prefix + "cmap_seed" + str(seed) + ".npy")
     prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
-    newmap.save_map(week + prefix + "nc_newmap_seed" + str(seed) + ".npy")
+    newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
+    if save_file:
+        ### save arrays to files
+        with open (week + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
+            np.save(f, acc_results)
 
+        with open (week + prefix + "global_seed"+ str(seed) + ".npy", 'wb') as f2:
+            np.save(f2, complete_test_results)
 
-if save_file:
-    ### save arrays to files
-    with open (week + prefix + "local_seed" + str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f:
-        np.save(f, acc_results)
-
-    with open (week + prefix + "nc_global_seed"+ str(seed)+ str(seed + num_runs) + ".npy", 'wb') as f2:
-        np.save(f2, complete_test_results)
 
 print(repr(acc_results))
 print(repr(complete_test_results))

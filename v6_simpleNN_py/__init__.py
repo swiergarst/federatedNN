@@ -15,9 +15,9 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, parameters, criterion, lr = 0e5, scaffold = False, c = None,  optimizer = 'SGD', dataset = 'banana', use_c = True):
+def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, scaffold = False, c = None,  optimizer = 'SGD', dataset = 'banana', use_c = True):
     ### create net from given architeture
-    net = model(dataset)
+    net = model(dataset, model_choice)
     net = net.double() #apparently I need this
 
     #load in the data file in the correct format
@@ -44,13 +44,16 @@ def RPC_train_and_test(data, parameters, criterion, lr = 0e5, scaffold = False, 
         y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
         y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
 
+        if model_choice == "CNN":
+            X_train = X_train.reshape(X_train.shape[0], 1, 28,28)
+            X_test = X_test.reshape(X_test.shape[0], 1, 28, 28)
         num_samples = X_train.size()[0]
     ### initialize the weights and biases from input
     net.set_params(parameters)
 
     ### create optimizer 
     if (optimizer == 'SGD'):
-        opt = optim.SGD(net.parameters(), lr=5e-1)
+        opt = optim.SGD(net.parameters(), lr=lr)
         
    ### test the model
    # we test before training such that the same model is used as in the server
