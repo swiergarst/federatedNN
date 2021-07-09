@@ -55,7 +55,7 @@ week = "../datafiles/w11/"
 model_choice = "CNN"
 save_file = True
 class_imbalance = False
-sample_imbalance = True
+sample_imbalance = False
 use_scaffold=False
 use_c = False
 use_sizes = False
@@ -67,9 +67,6 @@ num_clients = 10
 num_runs = 4
 seed_offset = 0
 
-# arrays to store results
-acc_results = np.zeros((num_runs, num_clients, num_global_rounds))
-complete_test_results = np.empty((num_runs, num_global_rounds))
 
 prevmap = heatmap(num_clients, num_global_rounds)
 newmap = heatmap(num_clients, num_global_rounds)
@@ -77,6 +74,10 @@ newmap = heatmap(num_clients, num_global_rounds)
 cmap = heatmap(num_clients , num_global_rounds)
 ### main loop
 for run in range(num_runs):
+    # arrays to store results
+    acc_results = np.zeros((num_clients, num_global_rounds))
+    complete_test_results = np.empty((num_global_rounds))
+
     seed = run + seed_offset
     torch.manual_seed(seed)
     datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
@@ -148,15 +149,15 @@ for run in range(num_runs):
         testModel.set_params(parameters)
         complete_test_results[run ,round]  = testModel.test(X_test, y_test, criterion)
     if use_scaffold:    
-        cmap.save_map(week + prefix + "cmap_seed" + str(seed) + ".npy")
-    prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
-    newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
+        cmap.save_map(week + prefix + "CNN_cmap_seed" + str(seed) + ".npy")
+    prevmap.save_map(week + prefix + "CNN_prevmap_seed" + str(seed) + ".npy")
+    newmap.save_map(week + prefix + "CNN_newmap_seed" + str(seed) + ".npy")
     if save_file:
         ### save arrays to files
-        with open (week + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
+        with open (week + prefix + "CNN_local_seed" + str(seed) + ".npy", 'wb') as f:
             np.save(f, acc_results)
 
-        with open (week + prefix + "global_seed"+ str(seed) + ".npy", 'wb') as f2:
+        with open (week + prefix + "CNN_global_seed"+ str(seed) + ".npy", 'wb') as f2:
             np.save(f2, complete_test_results)
 
 
