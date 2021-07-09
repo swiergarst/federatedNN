@@ -26,6 +26,8 @@ criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 lr_local = 5e-2
 lr_global = 5e-1
+local_epochs = 1
+local_batch_amt = 1
 
 # boolean settings
 save_file = False
@@ -82,6 +84,8 @@ for round in range(num_global_rounds):
                 'optimizer': optimizer,
                 'model_choice' : model_choice,
                 'lr' : lr_local,
+                'local_epochs' : local_epochs,
+                'local_batch_amt' : local_batch_amt,
                 'scaffold' : use_scaffold,
                 'c' : c, 
                 'dataset' : dataset, 

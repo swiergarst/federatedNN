@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import numpy as np
+import math
 import sys
 
 
@@ -68,22 +69,27 @@ class model(nn.Module):
         return self.lin_layers(input)
 
 
-    def train(self, X_train, y_train, optimizer, criterion, lr, c,  scaffold, use_c):
+    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c):
     #print(X_train)
     #iterate through data
-        # zero the optimizer gradients
-        optimizer.zero_grad()
-        #print(datapoint)
-        ### forward pass, backward pass, optimizer step
-        out = self.forward(X_train)
-        #print(out)
-        loss = criterion(out, y_train)
-        loss.backward()
-        if scaffold :
-            self.scaffold_update(lr, c, use_c)
-        else : 
-            optimizer.step()
-        #sys.exit()
+        batch_size = math.floor(X_train.size()[0]/batch_amount)
+        for e in range (epochs):
+            for batch in range(batch_amount):
+                X_train_batch = X_train[batch* batch_size: (batch+1) * batch_size]
+                y_train_batch = y_train[batch* batch_size: (batch+1) * batch_size]
+                # zero the optimizer gradients
+                optimizer.zero_grad()
+                #print(datapoint)
+                ### forward pass, backward pass, optimizer step
+                out = self.forward(X_train_batch)
+                #print(out)
+                loss = criterion(out, y_train_batch)
+                loss.backward()
+                if scaffold :
+                    self.scaffold_update(lr, c, use_c)
+                else : 
+                    optimizer.step()
+            #sys.exit()
 
     def test(self, X_test, y_test, criterion):
         correct = 0

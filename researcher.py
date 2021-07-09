@@ -42,9 +42,10 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-1
+lr_local = 1.5e-1
 lr_global = 5e-1
-
+local_epochs = 1
+local_batch_amt = 1
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
@@ -53,7 +54,7 @@ dataset = 'MNIST_2class_IID'
 week = "../datafiles/w11/"
 
 model_choice = "CNN"
-save_file = True
+save_file = False
 class_imbalance = False
 sample_imbalance = False
 use_scaffold=False
@@ -62,9 +63,9 @@ use_sizes = False
 prefix = get_save_str(class_imbalance, sample_imbalance, use_scaffold, use_sizes)
 
 #federated settings
-num_global_rounds = 100
+num_global_rounds = 10
 num_clients = 10
-num_runs = 4
+num_runs = 1
 seed_offset = 0
 
 
@@ -98,6 +99,8 @@ for run in range(num_runs):
                     'optimizer': optimizer,
                     'model_choice' : model_choice,
                     'lr' : lr_local,
+                    'local_epochs' : local_epochs,
+                    'local_batch_amt' : local_batch_amt,
                     'scaffold' : use_scaffold,
                     'c' : c,
                     'dataset' : dataset,
@@ -132,7 +135,7 @@ for run in range(num_runs):
         #print(np.array(results[0,1]))
         #print(results[:,1])
         local_parameters = np.array(results[:,0])
-        acc_results[run, :, round] = np.array(results[:,1])
+        acc_results[:, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
         prevmap.save_round(round, local_parameters, parameters)
         if use_scaffold:
@@ -147,7 +150,7 @@ for run in range(num_runs):
         newmap.save_round(round, local_parameters, parameters)
         # 'global' test
         testModel.set_params(parameters)
-        complete_test_results[run ,round]  = testModel.test(X_test, y_test, criterion)
+        complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
     if use_scaffold:    
         cmap.save_map(week + prefix + "CNN_cmap_seed" + str(seed) + ".npy")
     prevmap.save_map(week + prefix + "CNN_prevmap_seed" + str(seed) + ".npy")
@@ -169,9 +172,9 @@ x = np.arange(num_global_rounds)
 
 prevmap.show_map()
 newmap.show_map()
-'''
-plt.plot(x, np.mean(acc_results, axis=1, keepdims=False)[0,:])
+
+#plt.plot(x, np.mean(acc_results, axis=1, keepdims=False)[0,:])
 plt.plot(x, complete_test_results)
 plt.show()
-'''
+
     ### generate new model parameters
