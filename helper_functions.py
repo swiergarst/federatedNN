@@ -239,7 +239,7 @@ class heatmap():
             np.save(f, self.map)
 
 
-def get_save_str(c_i, s_i, u_sc, u_si):
+def get_save_str(m_choice, c_i, s_i, u_sc, u_si, lr,  epoch, batch):
     if c_i:
         str1 = "ci"
     elif s_i:
@@ -254,5 +254,6 @@ def get_save_str(c_i, s_i, u_sc, u_si):
     else:
         str2 = "no_comp"
 
-    return (str1 + "_" + str2)
+    
+    return (str1 + "_" + str2 + "_" + m_choice + "_lr" + str(lr) + "_lepo" + str(epoch) + "_ba" + str(batch))
     

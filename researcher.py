@@ -42,10 +42,10 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 1.5e-1
+lr_local = 5e-2
 lr_global = 5e-1
 local_epochs = 1
-local_batch_amt = 1
+local_batch_amt = 10
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
@@ -54,18 +54,18 @@ dataset = 'MNIST_2class_IID'
 week = "../datafiles/w11/"
 
 model_choice = "CNN"
-save_file = False
+save_file = True
 class_imbalance = False
 sample_imbalance = False
 use_scaffold=False
 use_c = False
 use_sizes = False
-prefix = get_save_str(class_imbalance, sample_imbalance, use_scaffold, use_sizes)
+prefix = get_save_str(model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 10
+num_global_rounds = 100
 num_clients = 10
-num_runs = 1
+num_runs = 4
 seed_offset = 0
 
 
@@ -108,7 +108,7 @@ for run in range(num_runs):
                 }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:2ClassNN3",
+            image = "sgarst/federated-learning:2ClassNN4",
             organization_ids=ids,
             collaboration_id= 1
         )
@@ -151,11 +151,13 @@ for run in range(num_runs):
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
-    if use_scaffold:    
-        cmap.save_map(week + prefix + "CNN_cmap_seed" + str(seed) + ".npy")
-    prevmap.save_map(week + prefix + "CNN_prevmap_seed" + str(seed) + ".npy")
-    newmap.save_map(week + prefix + "CNN_newmap_seed" + str(seed) + ".npy")
+    
+    
     if save_file:
+        if use_scaffold:    
+            cmap.save_map(week + prefix + "CNN_cmap_seed" + str(seed) + ".npy")
+        prevmap.save_map(week + prefix + "CNN_prevmap_seed" + str(seed) + ".npy")
+        newmap.save_map(week + prefix + "CNN_newmap_seed" + str(seed) + ".npy")
         ### save arrays to files
         with open (week + prefix + "CNN_local_seed" + str(seed) + ".npy", 'wb') as f:
             np.save(f, acc_results)
