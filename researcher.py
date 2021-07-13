@@ -55,10 +55,10 @@ week = "../datafiles/w11/"
 
 model_choice = "CNN"
 save_file = True
-class_imbalance = False
+class_imbalance = True
 sample_imbalance = False
-use_scaffold=False
-use_c = False
+use_scaffold=True
+use_c = True
 use_sizes = False
 prefix = get_save_str(model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 

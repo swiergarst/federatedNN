@@ -55,6 +55,16 @@ def get_datasets(dataset, class_imbalance = False, sample_imbalance = False):
             datasets =["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_Sample_Imbalance/MNIST_2Class_sample_imbalance_client" + str(i) + ".csv" for i in range(10)]
         else:
             datasets= ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_IID/MNIST_2Class_IID_client" + str(i) + ".csv" for i in range(10)]
+    elif dataset == 'MNIST_4class':
+        if class_imbalance:
+            datasets = ["/home/swier/Documents/afstuderen/datasets/4Class_class_imbalance/MNIST_4Class_class_imbalance_client" + str(i) + ".csv" for i in range(10)]
+        elif sample_imbalance:
+            datasets = ["/home/swier/Documents/afstuderen/datasets/4Class_sample_imbalance/MNIST_4Class_sample_imbalance_client" + str(i) + ".csv" for i in range(10)]
+        else:
+            datasets = ["/home/swier/Documents/afstuderen/datasets/4Class_IID/MNIST_4Class_IID_client" + str(i) + ".csv" for i in range(10)]
+    else :
+        raise(ValueError("unknown dataset"))
+    
     return datasets
 
 def get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance):
