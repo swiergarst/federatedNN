@@ -33,20 +33,20 @@ local_batch_amt = 1
 save_file = False
 class_imbalance = False
 sample_imbalance = False
-use_scaffold = True
+use_scaffold = False
 use_c = True
 use_sizes = False
 #c = np.zeros(4)
 
 #federated settings
-num_global_rounds = 100
+num_global_rounds = 10
 num_clients = 10
-num_runs = 4
+num_runs = 1
 seed_offset = 0
 
 
 #dataset
-dataset = 'MNIST_2class_IID'
+dataset = 'MNIST_2class'
 model_choice = 'CNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 
