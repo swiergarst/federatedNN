@@ -32,7 +32,7 @@ def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, loc
         X_test = torch.as_tensor(X_test_arr, dtype=torch.double)
         y_train = torch.as_tensor(y_train_arr, dtype=torch.int64)
         y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
-    elif dataset == 'MNIST' or dataset == 'MNIST_2class_IID':
+    elif dataset == 'MNIST' or dataset == 'MNIST_2class' or dataset == "MNIST_4class":
         dim_num = 784
         dims = ['pixel' + str(i) for i in range(dim_num)]
         X_train_arr = data.loc[data['test/train'] == 'train'][dims].values

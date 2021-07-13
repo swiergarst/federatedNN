@@ -48,7 +48,7 @@ def get_datasets(dataset, class_imbalance = False, sample_imbalance = False):
         datasets =  ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/banana/banana_dataset_client" + str(i) + ".csv" for i in range(10)]
     elif dataset == 'MNIST':
         datasets= ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST/MNIST_dataset_client" + str(i) + ".csv" for i in range(10)]
-    elif dataset == 'MNIST_2class_IID':
+    elif dataset == 'MNIST_2class':
         if class_imbalance:
             datasets = ["/home/swier/Documents/afstuderen/nnTest/v6_simpleNN_py/local/MNIST_2Class_class_imbalance/MNIST_2Class_class_imbalance_client" + str(i) + ".csv" for i in range(10)]
         elif sample_imbalance:
@@ -71,9 +71,7 @@ def get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbal
     datasets = get_datasets(dataset, class_imbalance, sample_imbalance)
     parameters = init_params(dataset, model_choice, False)
     c, ci = get_c(dataset, model_choice, num_clients)
-
-    if dataset == 'MNIST_2class_IID':
-        X_test, y_test = get_full_dataset(datasets, model_choice)
+    X_test, y_test = get_full_dataset(datasets, model_choice)
         
 
     return datasets, parameters, X_test, y_test, c, ci
@@ -96,7 +94,7 @@ def init_params(dataset, model_choice, zeros = True):
             'lin_layers.2.weight' : torch.zeros((10,100), dtype=torch.double),
             'lin_layers.2.bias' : torch.zeros((10), dtype=torch.double)
         }
-        elif dataset == 'MNIST_2class_IID':
+        elif dataset == 'MNIST_2class':
             if model_choice == "FNN":
                 parameters= {
                 'lin_layers.0.weight' : torch.zeros((100,28*28), dtype=torch.double),
@@ -110,6 +108,21 @@ def init_params(dataset, model_choice, zeros = True):
                     'conv_layers.0.bias' : torch.zeros(1),
                     'lin_layers.0.weight' : torch.zeros((2, 196)),
                     'lin_layers.0.bias' : torch.zeros(2)
+                }
+        elif dataset == "MNIST_4class":
+            if model_choice == "FNN":
+                parameters= {
+                'lin_layers.0.weight' : torch.zeros((100,28*28), dtype=torch.double),
+                'lin_layers.0.bias' : torch.zeros((100), dtype=torch.double),
+                'lin_layers.2.weight' : torch.zeros((4,100), dtype=torch.double),
+                'lin_layers.2.bias' : torch.zeros((4), dtype=torch.double)
+                }
+            elif model_choice == "CNN":
+                parameters = {
+                    'conv_layers.0.weight': torch.zeros((1,1,3,3)),
+                    'conv_layers.0.bias' : torch.zeros(1),
+                    'lin_layers.0.weight' : torch.zeros((4, 196)),
+                    'lin_layers.0.bias' : torch.zeros(4)
                 }
             else:
                 raise ValueError("model selection not known")
@@ -129,7 +142,7 @@ def init_params(dataset, model_choice, zeros = True):
                 'lin_layers.2.weight' : torch.randn((10,100), dtype=torch.double),
                 'lin_layers.2.bias' : torch.randn((10), dtype=torch.double)
             } 
-        elif dataset == 'MNIST_2class_IID':
+        elif dataset == 'MNIST_2class':
             if model_choice == "FNN":
                 parameters= {
                 'lin_layers.0.weight' : torch.randn((100,28*28), dtype=torch.double),
@@ -143,6 +156,21 @@ def init_params(dataset, model_choice, zeros = True):
                     'conv_layers.0.bias' : torch.randn(1),
                     'lin_layers.0.weight' : torch.randn((2, 196)),
                     'lin_layers.0.bias' : torch.randn(2)
+                }
+        elif dataset == 'MNIST_4class':
+            if model_choice == "FNN":
+                parameters= {
+                'lin_layers.0.weight' : torch.randn((100,28*28), dtype=torch.double),
+                'lin_layers.0.bias' : torch.randn((100), dtype=torch.double),
+                'lin_layers.2.weight' : torch.randn((4,100), dtype=torch.double),
+                'lin_layers.2.bias' : torch.randn((4), dtype=torch.double)
+                }
+            elif model_choice == "CNN":
+                parameters = {
+                    'conv_layers.0.weight': torch.randn((1,1,3,3)),
+                    'conv_layers.0.bias' : torch.randn(1),
+                    'lin_layers.0.weight' : torch.randn((4, 196)),
+                    'lin_layers.0.bias' : torch.randn(4)
                 }
     return (parameters)
 

@@ -50,8 +50,8 @@ local_batch_amt = 10
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'MNIST_2class_IID'
-week = "../datafiles/w11/"
+dataset = 'MNIST_2class'
+week = "../datafiles/w12/"
 
 model_choice = "CNN"
 save_file = True

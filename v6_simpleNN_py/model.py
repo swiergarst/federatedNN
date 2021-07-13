@@ -38,8 +38,8 @@ class model(nn.Module):
                 nn.ReLU(),
                 nn.Linear(100,10)
             )
-        elif dataset == "MNIST_2class_IID":
-            if model == "FNN":
+        elif dataset == "MNIST_2class":
+            if self.model_choice == "FNN":
                 return nn.Sequential(
                     nn.Linear(28*28, 100),
                     nn.ReLU(),
@@ -54,7 +54,22 @@ class model(nn.Module):
                     nn.Linear(196, 2)
                     )
                 return convLayers, linLayers
-                
+        elif dataset == "MNIST_4class" :
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(28*28, 100),
+                    nn.ReLU(),
+                    nn.Linear(100,4)    
+                )
+            elif self.model_choice == "CNN":
+                convLayers = nn.Sequential(
+                    nn.Conv2d(1,1, kernel_size=3, stride=1, padding=1),
+                    nn.MaxPool2d(kernel_size=2, stride=2)
+                )
+                linLayers = nn.Sequential(
+                    nn.Linear(196, 4)
+                    )
+                return convLayers, linLayers
             else :
                 raise ValueError("no known model selection supplied")
         else:
