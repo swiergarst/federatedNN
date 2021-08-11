@@ -42,31 +42,31 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-2
+lr_local = 5e-1
 lr_global = 5e-1
 local_epochs = 1
-local_batch_amt = 10
+local_batch_amt = 1
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
 dataset = 'MNIST_2class'
-week = "../datafiles/w12/"
+week = "../datafiles/w13/"
 
-model_choice = "CNN"
+model_choice = "FNN"
 save_file = True
 class_imbalance = True
 sample_imbalance = False
 use_scaffold=True
 use_c = True
-use_sizes = False
-prefix = get_save_str(model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
+use_sizes = True
+prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
 num_global_rounds = 100
 num_clients = 10
-num_runs = 4
-seed_offset = 0
+num_runs = 3
+seed_offset = 1
 
 
 prevmap = heatmap(num_clients, num_global_rounds)
@@ -86,7 +86,9 @@ for run in range(num_runs):
     testModel = model(dataset, model_choice)
     testModel.double()
     for round in range(num_global_rounds):
-        old_ci = ci
+        old_ci = ci.copy() 
+        #old_ci = ci
+        #print("initial old ci: ", old_ci)
         print("starting round", round)
         ### request task from clients
         round_task = client.post_task(
@@ -108,11 +110,11 @@ for run in range(num_runs):
                 }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:2ClassNN4",
+            image = "sgarst/federated-learning:2ClassNN5",
             organization_ids=ids,
             collaboration_id= 1
         )
-        
+
         #print(round_task)
         info("Waiting for results")
         res = client.get_results(task_id=round_task.get("id"))
@@ -138,15 +140,17 @@ for run in range(num_runs):
         acc_results[:, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
         prevmap.save_round(round, local_parameters, parameters)
+
         if use_scaffold:
             ci = results[:,3]
 
-        if use_scaffold:
             parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
+            #print("old ci: ", old_ci)
+            cmap.save_round(round, ci, c)
         else:
             parameters = average(local_parameters, dataset_sizes, None, dataset, model_choice, use_imbalances=False, use_sizes= use_sizes)
-        if use_scaffold:
-            cmap.save_round(round, ci, c)
+
+
         newmap.save_round(round, local_parameters, parameters)
         # 'global' test
         testModel.set_params(parameters)
@@ -155,14 +159,14 @@ for run in range(num_runs):
     
     if save_file:
         if use_scaffold:    
-            cmap.save_map(week + prefix + "CNN_cmap_seed" + str(seed) + ".npy")
-        prevmap.save_map(week + prefix + "CNN_prevmap_seed" + str(seed) + ".npy")
-        newmap.save_map(week + prefix + "CNN_newmap_seed" + str(seed) + ".npy")
+            cmap.save_map(week + prefix + "cmap_seed" + str(seed) + ".npy")
+        prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
+        newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
         ### save arrays to files
-        with open (week + prefix + "CNN_local_seed" + str(seed) + ".npy", 'wb') as f:
+        with open (week + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
             np.save(f, acc_results)
 
-        with open (week + prefix + "CNN_global_seed"+ str(seed) + ".npy", 'wb') as f2:
+        with open (week + prefix + "_global_seed"+ str(seed) + ".npy", 'wb') as f2:
             np.save(f2, complete_test_results)
 
 
@@ -171,9 +175,9 @@ print(repr(complete_test_results))
 #print(np.mean(acc_results, axis=0))
 print("final runtime", (time.time() - start_time)/60)
 x = np.arange(num_global_rounds)
-
-prevmap.show_map()
-newmap.show_map()
+cmap.show_map(normalized=False)
+#prevmap.show_map()
+#newmap.show_map()
 
 #plt.plot(x, np.mean(acc_results, axis=1, keepdims=False)[0,:])
 plt.plot(x, complete_test_results)

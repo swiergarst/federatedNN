@@ -198,7 +198,8 @@ def get_full_dataset(datasets, model_choice):
 def get_c(dataset, model_choice, num_clients):
     c = init_params(dataset, model_choice, zeros=True)
 
-    ci = [c] * num_clients
+    ci = [init_params(dataset, model_choice, zeros=True)
+] * num_clients
     return c, ci
 
 class heatmap():
@@ -243,9 +244,12 @@ class heatmap():
         return(size)
 
 
-    def show_map(self, title = "", show_text=False):
+    def show_map(self, title = "",normalized = True,  show_text=False):
         fig, ax = plt.subplots()
-        final_map = self.map / LA.norm(self.map, axis=0)
+        if normalized:
+            final_map = self.map / LA.norm(self.map, axis=0)
+        else: 
+            final_map = self.map
         #print(self.map)
         #print(LA.norm(self.map, axis=0))
         im = ax.imshow(final_map)
@@ -277,7 +281,7 @@ class heatmap():
             np.save(f, self.map)
 
 
-def get_save_str(m_choice, c_i, s_i, u_sc, u_si, lr,  epoch, batch):
+def get_save_str(dataset, m_choice, c_i, s_i, u_sc, u_si, lr,  epoch, batch):
     if c_i:
         str1 = "ci"
     elif s_i:
@@ -292,6 +296,7 @@ def get_save_str(m_choice, c_i, s_i, u_sc, u_si, lr,  epoch, batch):
     else:
         str2 = "no_comp"
 
+
     
-    return (str1 + "_" + str2 + "_" + m_choice + "_lr" + str(lr) + "_lepo" + str(epoch) + "_ba" + str(batch))
+    return (dataset + str1 + "_" + str2 + "_" + m_choice + "_lr" + str(lr) + "_lepo" + str(epoch) + "_ba" + str(batch))
     

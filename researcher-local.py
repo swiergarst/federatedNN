@@ -46,8 +46,8 @@ seed_offset = 0
 
 
 #dataset
-dataset = 'MNIST_2class'
-model_choice = 'CNN'
+dataset = 'MNIST_4class'
+model_choice = 'FNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 
 #test model for global testing
