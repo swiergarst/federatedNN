@@ -101,7 +101,10 @@ class model(nn.Module):
                 loss = criterion(out, y_train_batch)
                 loss.backward()
                 if scaffold :
-                    self.scaffold_update(lr, c, use_c, batch_amount)
+                    if batch == batch_amount - 1:
+                        self.scaffold_update(lr, c, True, batch_amount)
+                    else:
+                        self.scaffold_update(lr, c, False, batch_amount)
                 else : 
                     optimizer.step()
             #sys.exit()
