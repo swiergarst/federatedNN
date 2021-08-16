@@ -101,7 +101,7 @@ class model(nn.Module):
                 loss = criterion(out, y_train_batch)
                 loss.backward()
                 if scaffold :
-                    self.scaffold_update(lr, c, use_c)
+                    self.scaffold_update(lr, c, use_c, batch_amount)
                 else : 
                     optimizer.step()
             #sys.exit()
@@ -130,13 +130,13 @@ class model(nn.Module):
         #    parameters.append(layer.state_dict())
         #return parameters
         
-    def scaffold_update(self, lr, c, use_c):
+    def scaffold_update(self, lr, c, use_c, batch):
         params = self.get_params()
         updated_param_dict = {}
         for para, param in zip(self.parameters(), params):
             updated_param_dict[param] = params[param] - lr * (para.grad + c[param] - self.ci[param])
             if use_c:
-                self.ci[param] = self.ci[param] - c[param] + (1/lr) * (params[param] - updated_param_dict[param])
+                self.ci[param] = self.ci[param] - c[param] + (1/(batch*lr)) * (params[param] - updated_param_dict[param])
 
         self.set_params(updated_param_dict)
         #print(lr)

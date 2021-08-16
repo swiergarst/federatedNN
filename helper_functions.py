@@ -8,21 +8,29 @@ import numpy.linalg as LA
 #fedAvg implementation
 def average(in_params, set_sizes, class_imbalances, dataset, model_choice, use_sizes= False, use_imbalances = False) :
 
-    parameters = init_params(dataset, model_choice, True)
+
 
     #create size-based weights
     num_clients = set_sizes.size
     weights = np.ones_like(set_sizes)/num_clients
 
-    
+
     if use_sizes:
         total_size = np.sum(set_sizes) 
         weights = set_sizes / total_size
     
     #do averaging
-    for param in parameters.keys():
-        for i in range(num_clients):
-            parameters[param] += weights[i] * in_params[i][param]
+    if isinstance(in_params, dict):
+        parameters = init_params(dataset, model_choice, True)
+
+        for param in parameters.keys():
+            for i in range(num_clients):
+                parameters[param] += weights[i] * in_params[i][param]
+    else:
+        parameters = np.zeros_like(in_params[0])
+        for i in range (in_params.shape[1]):
+            for j in range(num_clients):
+                parameters[i] += weights[j] * in_params[j,i]
 
     return parameters
 
