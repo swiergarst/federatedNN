@@ -11,20 +11,22 @@ import sys
 
 
 class model(nn.Module):
-    def __init__(self, dataset, model_choice):
+    def __init__(self, dataset, model_choice, ci):
         super(model, self).__init__()
         self.dataset = dataset
-        self.ci = {}
+        self.ci = ci
         self.model_choice = model_choice
+        
         if self.model_choice == "CNN":    
             self.conv_layers, self.lin_layers = self.get_model(dataset)
         else:
             self.lin_layers = self.get_model(dataset)
+        
 
-        params = self.get_params()
-
-        for param in params:
-            self.ci[param] = torch.zeros_like(params[param])
+        #params = self.get_params()
+        
+        #for param in params:
+        #    self.ci[param] = torch.zeros_like(params[param])
 
     def get_model(self, dataset):
         if dataset == "banana":
@@ -78,10 +80,13 @@ class model(nn.Module):
     def forward(self, input):
         #print(input)
         #print(input.shape)
+
+        
         if self.model_choice == "CNN":
             input = self.conv_layers(input)
             input = input.view(input.shape[0], -1)
         return self.lin_layers(input)
+  
 
 
     def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c):
@@ -139,7 +144,7 @@ class model(nn.Module):
         for para, param in zip(self.parameters(), params):
             updated_param_dict[param] = params[param] - lr * (para.grad + c[param] - self.ci[param])
             if use_c:
-                self.ci[param] = self.ci[param] - c[param] + (1/(batch*lr)) * (params[param] - updated_param_dict[param])
+                self.ci[param] = self.ci[param] - c[param] + ((1/(batch*lr)) * (params[param] - updated_param_dict[param]))
 
         self.set_params(updated_param_dict)
         #print(lr)

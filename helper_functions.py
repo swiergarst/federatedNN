@@ -20,7 +20,7 @@ def average(in_params, set_sizes, class_imbalances, dataset, model_choice, use_s
         weights = set_sizes / total_size
     
     #do averaging
-    if isinstance(in_params, np.ndarray):
+    if isinstance(in_params[0], np.ndarray):
         parameters = np.zeros_like(in_params[0])
         for i in range (in_params.shape[1]):
             for j in range(num_clients):
