@@ -45,7 +45,7 @@ optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 5e-1
 local_epochs = 1
-local_batch_amt = 1
+local_batch_amt = 10
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
@@ -53,8 +53,8 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 dataset = 'MNIST_2class'
 week = "../datafiles/w14/"
 
-model_choice = "FNN"
-save_file = False
+model_choice = "CNN"
+save_file = True
 class_imbalance = True
 sample_imbalance = False
 use_scaffold=True
@@ -63,7 +63,7 @@ use_sizes = False
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 20
+num_global_rounds = 100
 num_clients = 10
 num_runs = 1
 seed_offset = 0
@@ -110,7 +110,7 @@ for run in range(num_runs):
                 }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:2ClassNN6",
+            image = "sgarst/federated-learning:fedNN1",
             organization_ids=ids,
             collaboration_id= 1
         )

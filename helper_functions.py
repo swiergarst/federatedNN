@@ -20,17 +20,17 @@ def average(in_params, set_sizes, class_imbalances, dataset, model_choice, use_s
         weights = set_sizes / total_size
     
     #do averaging
-    if isinstance(in_params, dict):
+    if isinstance(in_params, np.ndarray):
+        parameters = np.zeros_like(in_params[0])
+        for i in range (in_params.shape[1]):
+            for j in range(num_clients):
+                parameters[i] += weights[j] * in_params[j,i]
+    else:
         parameters = init_params(dataset, model_choice, True)
 
         for param in parameters.keys():
             for i in range(num_clients):
                 parameters[param] += weights[i] * in_params[i][param]
-    else:
-        parameters = np.zeros_like(in_params[0])
-        for i in range (in_params.shape[1]):
-            for j in range(num_clients):
-                parameters[i] += weights[j] * in_params[j,i]
 
     return parameters
 
