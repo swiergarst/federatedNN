@@ -49,7 +49,7 @@ def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, loc
             X_test = X_test.reshape(X_test.shape[0], 1, 28, 28)
         num_samples = X_train.size()[0]
     ### initialize the weights and biases from input
-    #net.set_params(parameters)
+    net.set_params(parameters)
 
     ### create optimizer 
     if (optimizer == 'SGD'):

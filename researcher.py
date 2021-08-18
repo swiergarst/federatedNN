@@ -53,17 +53,17 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 dataset = 'MNIST_2class'
 week = "../datafiles/w14/"
 
-model_choice = "CNN"
-save_file = True
-class_imbalance = True
+model_choice = "FNN"
+save_file = False
+class_imbalance = False
 sample_imbalance = False
-use_scaffold=True
+use_scaffold=False
 use_c = True
 use_sizes = False
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 100
+num_global_rounds = 10
 num_clients = 10
 num_runs = 1
 seed_offset = 0
@@ -82,14 +82,69 @@ for run in range(num_runs):
     seed = run + seed_offset
     torch.manual_seed(seed)
     datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
+    ci = np.array(ci)
     #test model for global testing
-    testModel = model(dataset, model_choice)
+    testModel = model(dataset, model_choice, c)
     testModel.double()
     for round in range(num_global_rounds):
-        old_ci = ci.copy() 
+        old_ci = np.copy(ci)
         #old_ci = ci
         #print("initial old ci: ", old_ci)
         print("starting round", round)
+
+        task_list = np.empty(num_clients, dtype=object)
+        '''
+        for i, org_id in enumerate(ids):
+            round_task = client.post_task(
+                input_= {
+                    'method' : 'train_and_test',
+                    'kwargs' : {
+                        'parameters' : parameters,
+                        'criterion': criterion,
+                        'optimizer': optimizer,
+                        'model_choice' : model_choice,
+                        'lr' : lr_local,
+                        'local_epochs' : local_epochs,
+                        'local_batch_amt' : local_batch_amt,
+                        'scaffold' : use_scaffold,
+                        'c' : c, 
+                        'ci': ci[i],
+                        'dataset' : dataset, 
+                        'use_c' : use_c
+                        }
+                },
+                name =  prefix + ", round " + str(round),
+                image = "sgarst/federated-learning:fedNN2",
+                organization_ids=[ids[i]],
+                collaboration_id= 1
+            )
+            task_list[i] =  round_task
+
+        finished = False
+        local_parameters = np.empty(num_clients, dtype=object)
+        dataset_sizes = np.empty(num_clients, dtype = object)
+        while (finished == False):
+            #new_task_list = np.copy(task_list)
+            solved_tasks = []
+            for task_i, task in enumerate(task_list):
+                result = client.get_results(task.get("id"))
+                if not (None in [result["result"]]):
+                #print(result[0,0])
+                    if not (task_i in solved_tasks):
+                        res = (np.load(BytesIO(result["result"]),allow_pickle=True))
+                        #print(res)
+                        local_parameters[task_i] = res[0]
+                        acc_results[task_i, round] = res[1]
+                        dataset_sizes[task_i] = res[2]
+                        ci[task_i] = res[3]
+                        solved_tasks.append(task_i)
+            
+            #task_list = np.copy(new_task_list)
+            if not (None in local_parameters):
+                finished = True
+            print("waiting")
+            time.sleep(1)
+        '''
         ### request task from clients
         round_task = client.post_task(
             input_= {
@@ -105,12 +160,13 @@ for run in range(num_runs):
                     'local_batch_amt' : local_batch_amt,
                     'scaffold' : use_scaffold,
                     'c' : c,
+                    'ci': ci[0],
                     'dataset' : dataset,
                     'use_c' : use_c
                 }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:fedNN1",
+            image = "sgarst/federated-learning:fedNN2",
             organization_ids=ids,
             collaboration_id= 1
         )
@@ -140,9 +196,9 @@ for run in range(num_runs):
         acc_results[:, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
         prevmap.save_round(round, local_parameters, parameters)
-
+        
         if use_scaffold:
-            ci = results[:,3]
+            #ci = results[:,3]
 
             parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
             #print("old ci: ", old_ci)
