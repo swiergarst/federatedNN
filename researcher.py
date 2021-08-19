@@ -42,10 +42,10 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-1
-lr_global = 5e-1
+lr_local = 5e-2
+lr_global = 5e-2
 local_epochs = 1
-local_batch_amt = 10
+local_batch_amt = 1
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
@@ -53,11 +53,11 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 dataset = 'MNIST_2class'
 week = "../datafiles/w14/"
 
-model_choice = "FNN"
+model_choice = "CNN"
 save_file = False
-class_imbalance = False
+class_imbalance = True
 sample_imbalance = False
-use_scaffold=False
+use_scaffold=True
 use_c = True
 use_sizes = False
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
@@ -93,7 +93,7 @@ for run in range(num_runs):
         print("starting round", round)
 
         task_list = np.empty(num_clients, dtype=object)
-        '''
+        
         for i, org_id in enumerate(ids):
             round_task = client.post_task(
                 input_= {
@@ -114,7 +114,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN2",
+                image = "sgarst/federated-learning:fedNN3",
                 organization_ids=[ids[i]],
                 collaboration_id= 1
             )
@@ -127,11 +127,12 @@ for run in range(num_runs):
             #new_task_list = np.copy(task_list)
             solved_tasks = []
             for task_i, task in enumerate(task_list):
-                result = client.get_results(task.get("id"))
-                if not (None in [result["result"]]):
+                result = client.get_results(task_id = task.get("id"))
+                #print(result)
+                if not (None in [result[0]["result"]]):
                 #print(result[0,0])
                     if not (task_i in solved_tasks):
-                        res = (np.load(BytesIO(result["result"]),allow_pickle=True))
+                        res = (np.load(BytesIO(result[0]["result"]),allow_pickle=True))
                         #print(res)
                         local_parameters[task_i] = res[0]
                         acc_results[task_i, round] = res[1]
@@ -145,6 +146,7 @@ for run in range(num_runs):
             print("waiting")
             time.sleep(1)
         '''
+        
         ### request task from clients
         round_task = client.post_task(
             input_= {
@@ -166,7 +168,7 @@ for run in range(num_runs):
                 }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:fedNN2",
+            image = "sgarst/federated-learning:fedNN3",
             organization_ids=ids,
             collaboration_id= 1
         )
@@ -181,7 +183,7 @@ for run in range(num_runs):
             time.sleep(1)
             res = client.get_results(task_id=round_task.get("id"))
             attempts += 1
-
+        
         info("Obtaining results")
         #result  = client.get_results(task_id=task.get("id"))
         result = []
@@ -196,7 +198,7 @@ for run in range(num_runs):
         acc_results[:, round] = np.array(results[:,1])
         dataset_sizes = np.array(results[:,2])
         prevmap.save_round(round, local_parameters, parameters)
-        
+        '''
         if use_scaffold:
             #ci = results[:,3]
 
@@ -231,7 +233,7 @@ print(repr(complete_test_results))
 #print(np.mean(acc_results, axis=0))
 print("final runtime", (time.time() - start_time)/60)
 x = np.arange(num_global_rounds)
-cmap.show_map(normalized=False)
+#cmap.show_map(normalized=False)
 #prevmap.show_map()
 #newmap.show_map()
 
