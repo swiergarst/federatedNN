@@ -14,7 +14,8 @@ sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 from vantage6.tools.mock_client import ClientMockProtocol
 from v6_simpleNN_py.model import model
-from helper_functions import average, get_datasets, get_config, scaffold
+from config_functions import get_datasets, get_config,get_full_dataset
+from comp_functions import average, scaffold
 
 start_time = time.time()
 
@@ -31,7 +32,7 @@ local_batch_amt = 1
 
 # boolean settings
 save_file = False
-class_imbalance = True
+class_imbalance = False
 sample_imbalance = False
 use_scaffold = False
 use_c = True
@@ -46,7 +47,7 @@ seed_offset = 0
 
 
 #dataset
-dataset = 'MNIST_2class'
+dataset = 'fashion_MNIST'
 model_choice = 'FNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 ci = np.array(ci)

@@ -18,8 +18,9 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average, get_datasets, scaffold, heatmap, get_save_str, clear_database
-from config_functions import get_config
+from helper_functions import heatmap
+from config_functions import get_config, clear_database, get_save_str
+from comp_functions import average, scaffold
 start_time = time.time()
 ### connect to server
 
