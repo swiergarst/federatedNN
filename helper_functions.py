@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 import numpy.linalg as LA
-
+import sqlite3
 
 #fedAvg implementation
 def average(in_params, set_sizes, class_imbalances, dataset, model_choice, use_sizes= False, use_imbalances = False) :
@@ -35,20 +35,37 @@ def average(in_params, set_sizes, class_imbalances, dataset, model_choice, use_s
     return parameters
 
 #scaffold implementation
-def scaffold(dataset,model_choice, global_parameters, local_parameters, c, old_local_c, local_c, lr, use_c = True):
-    num_clients = local_parameters.size
-    parameters = init_params(dataset, model_choice, True)
-    for param in parameters.keys():
-        param_agg = torch.clone(parameters[param])
-        c_agg = torch.clone(param_agg)
-        #calculate the sum of differences between the local and global model
+def scaffold(dataset,model_choice, global_parameters, local_parameters, c, old_local_c, local_c, lr, use_c = True, key = None):
+    #for sklearn-based implementations
+
+    if isinstance(global_parameters, np.ndarray):
+        num_clients = local_parameters.shape[0]
+
+        param_agg = np.zeros_like(global_parameters)
+        parameters = np.zeros_like(global_parameters)
+        c_agg = np.zeros_like(global_parameters)
+        
         for i in range(num_clients):
-            param_agg += local_parameters[i][param] - global_parameters[param]
-            c_agg += local_c[i][param] - old_local_c[i][param]
-        #calculate new weight value
-        parameters[param] = global_parameters[param] + (lr/num_clients) * param_agg 
-        if use_c:
-            c[param] = c[param] + (1/num_clients) * c_agg
+            c_agg += local_c[i][key] - old_local_c[i][key]
+            param_agg += local_parameters[i] - global_parameters
+        parameters = global_parameters + (lr/num_clients) * param_agg
+        c[key] = c[key] + (1/num_clients) * c_agg
+
+    #for pytorch-based implementations
+    else:
+        num_clients = local_parameters.size
+        parameters = init_params(dataset, model_choice, True)
+        for param in parameters.keys():
+            param_agg = torch.clone(parameters[param])
+            c_agg = torch.clone(param_agg)
+            #calculate the sum of differences between the local and global model
+            for i in range(num_clients):
+                param_agg += local_parameters[i][param] - global_parameters[param]
+                c_agg += local_c[i][param] - old_local_c[i][param]
+            #calculate new weight value
+            parameters[param] = global_parameters[param] + (lr/num_clients) * param_agg 
+            if use_c:
+                c[param] = c[param] + (1/num_clients) * c_agg
     return parameters, c
 
 def get_datasets(dataset, class_imbalance = False, sample_imbalance = False):
@@ -95,7 +112,7 @@ def init_params(dataset, model_choice, zeros = True):
             'lin_layers.1.weight' : torch.zeros((2,4), dtype=torch.double),
             'lin_layers.1.bias' : torch.zeros((2), dtype=torch.double)
         }
-        elif dataset == 'MNIST':
+        elif dataset == 'MNIST' or dataset == "fashion_MNIST":
             parameters= {
             'lin_layers.0.weight' : torch.zeros((100,28*28), dtype=torch.double),
             'lin_layers.0.bias' : torch.zeros((100), dtype=torch.double),
@@ -142,7 +159,7 @@ def init_params(dataset, model_choice, zeros = True):
                 'lin_layers.2.weight' : torch.randn((2,4), dtype=torch.double),
                 'lin_layers.2.bias' : torch.randn((2), dtype=torch.double)
             }
-        elif dataset == 'MNIST' : 
+        elif dataset == 'MNIST' or dataset == "fashion_MNIST": 
         # mnist parameters
             parameters= {
                 'lin_layers.0.weight' : torch.randn((100,28*28), dtype=torch.double),
@@ -246,9 +263,15 @@ class heatmap():
         size = 0
         for key in param_dict.keys():
             key_size = 1
-            for dict_size in param_dict[key].size():
-                key_size *= dict_size
-            size += key_size
+            if isinstance(param_dict[key], np.ndarray):
+                pass
+                for dict_size in param_dict[key].shape:
+                    key_size *= dict_size
+                    size += key_size   
+            else:
+                for dict_size in param_dict[key].size():
+                    key_size *= dict_size
+                size += key_size
         return(size)
 
 
@@ -308,3 +331,21 @@ def get_save_str(dataset, m_choice, c_i, s_i, u_sc, u_si, lr,  epoch, batch):
     
     return (dataset + str1 + "_" + str2 + "_" + m_choice + "_lr" + str(lr) + "_lepo" + str(epoch) + "_ba" + str(batch))
     
+
+
+def clear_database():
+    con = sqlite3.connect("/home/swier/Documents/afstuderen/default.sqlite")
+
+    cur = con.cursor()
+
+    com1 = "PRAGMA foreign_keys = 0;"
+    com2 = "DELETE FROM task;"
+    com3 = "DELETE FROM result;"# LIMIT 100;"
+
+    cur.execute(com1)
+    cur.execute(com2)
+    cur.execute(com3)
+
+
+    con.commit()
+    con.close()

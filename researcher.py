@@ -18,7 +18,8 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import average, get_datasets, get_config, scaffold, heatmap, get_save_str
+from helper_functions import average, get_datasets, scaffold, heatmap, get_save_str, clear_database
+from config_functions import get_config
 start_time = time.time()
 ### connect to server
 
@@ -42,19 +43,19 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-2
-lr_global = 5e-2
+lr_local = 5e-1
+lr_global = 1
 local_epochs = 1
-local_batch_amt = 1
+local_batch_amt = 10
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'MNIST_2class'
-week = "../datafiles/w14/"
+dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
+week = "../datafiles/w16/"
 
-model_choice = "CNN"
-save_file = False
+model_choice = "FNN"
+save_file = True
 class_imbalance = True
 sample_imbalance = False
 use_scaffold=True
@@ -63,7 +64,7 @@ use_sizes = False
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 10
+num_global_rounds = 100
 num_clients = 10
 num_runs = 1
 seed_offset = 0
@@ -73,6 +74,8 @@ prevmap = heatmap(num_clients, num_global_rounds)
 newmap = heatmap(num_clients, num_global_rounds)
 #if use_scaffold:
 cmap = heatmap(num_clients , num_global_rounds)
+
+
 ### main loop
 for run in range(num_runs):
     # arrays to store results
@@ -83,11 +86,15 @@ for run in range(num_runs):
     torch.manual_seed(seed)
     datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
     ci = np.array(ci)
+    old_ci = np.array([c.copy()] * num_clients)
+
     #test model for global testing
     testModel = model(dataset, model_choice, c)
     testModel.double()
     for round in range(num_global_rounds):
-        old_ci = np.copy(ci)
+        clear_database()
+        for i in range(num_clients):
+            old_ci[i] = ci[i].copy()
         #old_ci = ci
         #print("initial old ci: ", old_ci)
         print("starting round", round)
@@ -145,60 +152,7 @@ for run in range(num_runs):
                 finished = True
             print("waiting")
             time.sleep(1)
-        '''
-        
-        ### request task from clients
-        round_task = client.post_task(
-            input_= {
-                'method' : 'train_and_test',
-                'kwargs' : {
-                    #'architecture' : architecture,
-                    'parameters' : parameters,
-                    'criterion': criterion,
-                    'optimizer': optimizer,
-                    'model_choice' : model_choice,
-                    'lr' : lr_local,
-                    'local_epochs' : local_epochs,
-                    'local_batch_amt' : local_batch_amt,
-                    'scaffold' : use_scaffold,
-                    'c' : c,
-                    'ci': ci[0],
-                    'dataset' : dataset,
-                    'use_c' : use_c
-                }
-            },
-            name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:fedNN3",
-            organization_ids=ids,
-            collaboration_id= 1
-        )
 
-        #print(round_task)
-        info("Waiting for results")
-        res = client.get_results(task_id=round_task.get("id"))
-        attempts=1
-        #print(res)
-        while(None in [res[i]["result"] for i in range(num_clients)]  and attempts < 20000):
-            print("waiting...")
-            time.sleep(1)
-            res = client.get_results(task_id=round_task.get("id"))
-            attempts += 1
-        
-        info("Obtaining results")
-        #result  = client.get_results(task_id=task.get("id"))
-        result = []
-        for i in range(num_clients):
-            result.append(np.load(BytesIO(res[i]["result"]),allow_pickle=True))
-        
-
-        results = np.array(result)
-        #print(np.array(results[0,1]))
-        #print(results[:,1])
-        local_parameters = np.array(results[:,0])
-        acc_results[:, round] = np.array(results[:,1])
-        dataset_sizes = np.array(results[:,2])
-        prevmap.save_round(round, local_parameters, parameters)
-        '''
         if use_scaffold:
             #ci = results[:,3]
 
@@ -213,7 +167,7 @@ for run in range(num_runs):
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
-    
+    clear_database()
     
     if save_file:
         if use_scaffold:    

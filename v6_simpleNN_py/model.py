@@ -34,7 +34,7 @@ class model(nn.Module):
                nn.Linear(2,4),
                nn.Linear(2,4) 
             )
-        elif dataset == "MNIST":
+        elif dataset == "MNIST" or dataset == "fashion_MNIST":
             return nn.Sequential(            
                 nn.Linear(28*28,100),
                 nn.ReLU(),
@@ -72,6 +72,13 @@ class model(nn.Module):
                     nn.Linear(196, 4)
                     )
                 return convLayers, linLayers
+        elif dataset == "A2" : 
+            if self.model_choice == "FNN": 
+                return nn.Sequential(
+                    nn.Linear(12709, 100),
+                    nn.ReLU(),
+                    nn.Linear(100,2)    
+                )
             else :
                 raise ValueError("no known model selection supplied")
         else:
