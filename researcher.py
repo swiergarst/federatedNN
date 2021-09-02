@@ -24,7 +24,6 @@ from comp_functions import average, scaffold
 start_time = time.time()
 ### connect to server
 
-
 print("Attempt login to Vantage6 API")
 client = Client("http://localhost", 5000, "/api")
 client.authenticate("researcher", "1234")
@@ -56,7 +55,7 @@ dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_M
 week = "../datafiles/w16/"
 
 model_choice = "FNN"
-save_file = True
+save_file = False
 class_imbalance = True
 sample_imbalance = False
 use_scaffold=True
@@ -93,7 +92,6 @@ for run in range(num_runs):
     testModel = model(dataset, model_choice, c)
     testModel.double()
     for round in range(num_global_rounds):
-        clear_database()
         for i in range(num_clients):
             old_ci[i] = ci[i].copy()
         #old_ci = ci
@@ -103,6 +101,8 @@ for run in range(num_runs):
         task_list = np.empty(num_clients, dtype=object)
         
         for i, org_id in enumerate(ids):
+            #print("org id \t ids[i]")
+            #print(org_id, "\t", ids[i])
             round_task = client.post_task(
                 input_= {
                     'method' : 'train_and_test',
@@ -122,9 +122,10 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN3",
-                organization_ids=[ids[i]],
+                image = "sgarst/federated-learning:fedNN4",
+                organization_ids=[org_id],
                 collaboration_id= 1
+                
             )
             task_list[i] =  round_task
 
@@ -168,7 +169,7 @@ for run in range(num_runs):
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
-    clear_database()
+
     
     if save_file:
         if use_scaffold:    
@@ -181,6 +182,7 @@ for run in range(num_runs):
 
         with open (week + prefix + "_global_seed"+ str(seed) + ".npy", 'wb') as f2:
             np.save(f2, complete_test_results)
+    clear_database()
 
 
 print(repr(acc_results))
