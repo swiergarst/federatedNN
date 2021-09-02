@@ -100,9 +100,11 @@ for run in range(num_runs):
 
         task_list = np.empty(num_clients, dtype=object)
         
+
         for i, org_id in enumerate(ids):
             #print("org id \t ids[i]")
             #print(org_id, "\t", ids[i])
+
             round_task = client.post_task(
                 input_= {
                     'method' : 'train_and_test',
@@ -122,7 +124,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN4",
+                image = "sgarst/federated-learning:fedNN5",
                 organization_ids=[org_id],
                 collaboration_id= 1
                 
