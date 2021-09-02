@@ -54,7 +54,7 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
 week = "../datafiles/w16/"
 
-model_choice = "FNN"
+model_choice = "CNN"
 save_file = False
 class_imbalance = True
 sample_imbalance = False
