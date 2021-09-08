@@ -48,7 +48,7 @@ seed_offset = 0
 
 #dataset
 dataset = 'A2' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
-model_choice = 'FNN'
+model_choice = 'CNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 ci = np.array(ci)
 #test model for global testing

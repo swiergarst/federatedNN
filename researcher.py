@@ -43,7 +43,7 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-1
+lr_local = 5e-2
 lr_global = 1
 local_epochs = 1
 local_batch_amt = 10
@@ -51,22 +51,22 @@ local_batch_amt = 10
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
-week = "../datafiles/w16/"
+dataset = 'fashion_MNIST' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
+week = "../datafiles/w17/"
 
-model_choice = "FNN"
-save_file = False
-class_imbalance = True
+model_choice = "CNN"
+save_file = True
+class_imbalance = False
 sample_imbalance = False
-use_scaffold=True
+use_scaffold= False
 use_c = True
 use_sizes = False
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 100
+num_global_rounds = 200
 num_clients = 10
-num_runs = 1
+num_runs = 4
 seed_offset = 0
 
 
@@ -124,7 +124,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN5",
+                image = "sgarst/federated-learning:fedNN6",
                 organization_ids=[org_id],
                 collaboration_id= 1
                 

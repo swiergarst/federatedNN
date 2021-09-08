@@ -75,10 +75,17 @@ class model(nn.Module):
         elif dataset == "A2" : 
             if self.model_choice == "FNN": 
                 return nn.Sequential(
-                    nn.Linear(12709, 100),
+                    nn.Linear(100, 100),
                     nn.ReLU(),
                     nn.Linear(100,2)    
                 )
+            elif self.model_choice == "CNN":
+                convLayers = nn.Sequential(
+                    nn.Conv2d(1,1, kernel_size=3, stride=1, padding=1),
+                    nn.MaxPool2d(kernel_size=2, stride=2)
+                )
+                linLayers = nn.Sequential(nn.Linear(25,2))
+                return(convLayers, linLayers)
             else :
                 raise ValueError("no known model selection supplied")
         else:

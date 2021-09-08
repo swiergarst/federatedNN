@@ -5,6 +5,7 @@ from .model import model
 import torch.optim as optim
 from sklearn.model_selection import train_test_split
 import numpy as np
+import math
 
 ### master task (will not be used in the current setup, as the researcher file will do this)
 def master_task():
@@ -33,6 +34,11 @@ def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, loc
     ### initialize the weights and biases from input
     net.set_params(parameters)
 
+    if model_choice == "CNN":        
+        reshape_size = int(math.sqrt(X_test.shape[1]))
+        X_test = X_test.reshape(X_test.shape[0], 1, reshape_size, reshape_size)
+        X_train = X_train.reshape(X_train.shape[0], 1, reshape_size, reshape_size)
+            
     ### create optimizer 
     if (optimizer == 'SGD'):
         opt = optim.SGD(net.parameters(), lr=lr)
@@ -47,3 +53,27 @@ def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, loc
  
     ### return the new weights and the test results
     return (net.get_params(), test_results, num_samples, net.ci)
+
+
+def RPC_dicttest(data, setting):
+
+    # the FNN return
+    if setting == 1:
+        parameters= {
+                'lin_layers.0.weight' : torch.randn((100,28*28), dtype=torch.double),
+                'lin_layers.0.bias' : torch.randn((100), dtype=torch.double),
+                'lin_layers.2.weight' : torch.randn((2,100), dtype=torch.double),
+                'lin_layers.2.bias' : torch.randn((2), dtype=torch.double)
+        }                
+
+    # the CNN return
+    elif setting == 2:
+        parameters = {
+                    'conv_layers.0.weight': torch.randn((1,1,3,3), dtype=torch.double),
+                    'conv_layers.0.bias' : torch.randn(1, dtype=torch.double),
+                    'lin_layers.0.weight' : torch.randn((2, 196), dtype=torch.double),
+                    'lin_layers.0.bias' : torch.randn(2, dtype=torch.double)
+                }
+
+    return (parameters)
+        
