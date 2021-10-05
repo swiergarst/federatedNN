@@ -11,7 +11,7 @@ import sys
 import os
 import time 
 import pandas as pd
-
+import argparse
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 from v6_simpleNN_py.model import model
@@ -34,8 +34,50 @@ client.setup_encryption(privkey)
 #organizations = client.get_organizations_in_my_collaboration()
 #org_ids = [organization["id"] for organization in organizations]
 
+# Things to take as command line arguments:
 
 
+parser = argparse.ArgumentParser(description="researcher script for the CNN/FNN")
+parser.add_argument('--lr',type=float,default=5e-1, help='local learning rate')
+parser.add_argument('--lb',type=int,default=1, help='local batch amount')
+parser.add_argument('--mc',type=str, help='model choice')
+parser.add_argument('--ds',type=str, help='dataset')
+parser.add_argument('--ci',type=bool, help='class imbalance')
+parser.add_argument('--si',type=bool, help='sample imbalance')
+parser.add_argument('--usc',type=bool, help='use scaffold')
+parser.add_argument('--usi',type=bool, help='use sizes')
+parser.add_argument('--ngl',type=int,default=100, help='number of global rounds')
+parser.add_argument('--nr',type=int,default=4, help='number of runs')
+parser.add_argument('--so',type=int,default=0, help='seed offset')
+
+args = parser.parse_args()
+
+'''
+lr_local :          --lr
+local_batch_amt     --lb
+model_choice        --mc
+dataset             --ds
+class_imbalance     --ci
+sample_imbalance    --si
+use_scaffold        --usc
+use_sizes           --usi
+num_global_rounds   --ngl
+num_runs            --nr
+seed_offset         --so
+
+'''
+#print(vars(args))
+lr_local = args.lr
+local_batch_amt = args.lb
+model_choice = args.mc
+dataset = args.ds 
+class_imbalance = args.ci 
+sample_imbalance = args.si
+use_scaffold = args.usc
+num_global_rounds = args.ngl
+num_runs = args.nr
+seed_offset = args.so 
+use_sizes = args.usi
 
 ### parameter settings
 
@@ -43,32 +85,31 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-1
+#lr_local = 5e-1
 lr_global = 1
 local_epochs = 1
-
-local_batch_amt = 10
+#local_batch_amt = 10
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'A2_PCA' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
-week = "datafiles/w18/"
+dataset = 'MNIST_4class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
+week = "datafiles/w19/"
 
 model_choice = "FNN"
 save_file = True
-class_imbalance = False
-sample_imbalance = True
-use_scaffold= False
+#class_imbalance = False
+#sample_imbalance = True
+#use_scaffold= False
 use_c = True
-use_sizes = False
+#use_sizes = True
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 100
+#num_global_rounds = 100
 num_clients = 10
-num_runs = 4
-seed_offset = 0
+#num_runs = 3
+#seed_offset = 1
 
 
 prevmap = heatmap(num_clients, num_global_rounds)
@@ -125,7 +166,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN6",
+                image = "sgarst/federated-learning:fedNN7",
                 organization_ids=[org_id],
                 collaboration_id= 1
                 
@@ -172,6 +213,7 @@ for run in range(num_runs):
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
+        # clear database every 10 rounds
         if (round % 10) == 0:
             clear_database()
     
@@ -186,7 +228,7 @@ for run in range(num_runs):
 
         with open (week + prefix + "_global_seed"+ str(seed) + ".npy", 'wb') as f2:
             np.save(f2, complete_test_results)
-            # clear database every 10 rounds
+    
 
 
 
@@ -201,6 +243,6 @@ x = np.arange(num_global_rounds)
 
 #plt.plot(x, np.mean(acc_results, axis=1, keepdims=False)[0,:])
 plt.plot(x, complete_test_results)
-plt.show()
+#plt.show()
 
     ### generate new model parameters

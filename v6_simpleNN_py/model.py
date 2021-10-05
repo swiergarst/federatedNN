@@ -72,7 +72,7 @@ class model(nn.Module):
                     nn.Linear(196, 4)
                     )
                 return convLayers, linLayers
-        elif dataset == "A2" : 
+        elif dataset == "A2_PCA" : 
             if self.model_choice == "FNN": 
                 return nn.Sequential(
                     nn.Linear(100, 100),
