@@ -43,7 +43,7 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-1
+lr_local = 5e-2
 lr_global = 1
 local_epochs = 1
 
@@ -52,13 +52,13 @@ local_batch_amt = 10
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'A2_PCA' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
-week = "datafiles/w18/"
+dataset = 'fashion_MNIST' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
+week = "datafiles/w22/"
 
-model_choice = "FNN"
+model_choice = "CNN"
 save_file = True
 class_imbalance = False
-sample_imbalance = True
+sample_imbalance = False
 use_scaffold= False
 use_c = True
 use_sizes = False
@@ -125,7 +125,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN6",
+                image = "sgarst/federated-learning:fedNN8",
                 organization_ids=[org_id],
                 collaboration_id= 1
                 
@@ -172,8 +172,8 @@ for run in range(num_runs):
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
-        if (round % 10) == 0:
-            clear_database()
+        #if (round % 10) == 0:
+        #    clear_database()
     
     if save_file:
         if use_scaffold:    

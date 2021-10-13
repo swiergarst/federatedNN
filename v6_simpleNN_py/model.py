@@ -35,11 +35,21 @@ class model(nn.Module):
                nn.Linear(2,4) 
             )
         elif dataset == "MNIST" or dataset == "fashion_MNIST":
-            return nn.Sequential(            
-                nn.Linear(28*28,100),
-                nn.ReLU(),
-                nn.Linear(100,10)
-            )
+            if self.model_choice == "FNN": 
+                return nn.Sequential(            
+                    nn.Linear(28*28,100),
+                    nn.ReLU(),
+                    nn.Linear(100,10)
+                )
+            elif self.model_choice == "CNN" : 
+                convLayers = nn.Sequential(
+                    nn.Conv2d(1,1, kernel_size=3, stride=1, padding=1),
+                    nn.MaxPool2d(kernel_size=2, stride=2)
+                )
+                linLayers = nn.Sequential(
+                    nn.Linear(196, 10)
+                    )
+                return convLayers, linLayers
         elif dataset == "MNIST_2class":
             if self.model_choice == "FNN":
                 return nn.Sequential(
