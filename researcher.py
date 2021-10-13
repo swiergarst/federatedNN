@@ -125,7 +125,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN8",
+                image = "sgarst/federated-learning:fedNN9",
                 organization_ids=[org_id],
                 collaboration_id= 1
                 
