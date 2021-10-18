@@ -43,31 +43,31 @@ client.setup_encryption(privkey)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-2
+lr_local = 5e-3
 lr_global = 1
 local_epochs = 1
 
-local_batch_amt = 10
+local_batch_amt = 1
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'fashion_MNIST' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
-week = "datafiles/w22/"
+dataset = '3node' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
+week = "datafiles/w23/"
 
-model_choice = "CNN"
-save_file = True
+model_choice = "FNN"
+save_file = False
 class_imbalance = False
 sample_imbalance = False
 use_scaffold= False
 use_c = True
-use_sizes = False
+use_sizes = True
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
 
 #federated settings
-num_global_rounds = 100
+num_global_rounds = 20
 num_clients = 10
-num_runs = 4
+num_runs = 1
 seed_offset = 0
 
 
