@@ -37,38 +37,45 @@ client.setup_encryption(privkey)
 
 
 
-### parameter settings
+### parameter settings ###
 
 #torch
-
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 lr_local = 5e-2
-lr_global = 1
-local_epochs = 1
+lr_global = 1 #only affects scaffold. 1 is recommended
 
-local_batch_amt = 10    
+local_epochs = 1 #local epochs between each communication round
+local_batch_amt = 10 #amount of  batches the data gets split up in at each client   
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2
+dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
 week = "datafiles/w27/"
 
-model_choice = "CNN"
-save_file = True
+model_choice = "CNN" #decides the neural network; either FNN or CNN
+save_file = True # whether to save results in .npy files
+
+# these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
 class_imbalance = False
 sample_imbalance = True
-use_scaffold= False
-use_c = True
-use_sizes = True
-prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
+
+use_scaffold= False # if true, uses scaffold instead of federated averaging
+use_c = True # if false, all control variates are kept 0 in SCAFFOLD (debug purposes)
+use_sizes = True # if false, the non-weighted average is used in federated averaging (instead of the weighted average)
 
 #federated settings
-num_global_rounds = 100
-num_clients = 10
-num_runs = 3
-seed_offset = 1
+num_global_rounds = 100 #number of communication rounds
+num_clients = 10 #number of clients (make sure this matches the amount of running vantage6 clients)
+num_runs = 3 #amount of experiments to run using consecutive seeds
+seed_offset = 1 #decides which seeds to use: seed = seed_offset + current_run_number
+
+### end of settings ###
+
+prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
+
+
 
 
 prevmap = heatmap(num_clients, num_global_rounds)
