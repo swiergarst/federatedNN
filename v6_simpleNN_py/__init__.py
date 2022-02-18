@@ -16,7 +16,7 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True):
+def RPC_train_and_test(data, parameters, nb_parameters, criterion, model_choice, lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True):
     ### create net from given architeture
     net = model(dataset, model_choice, ci)
     net = net.double() #apparently I need this
@@ -48,7 +48,7 @@ def RPC_train_and_test(data, parameters, criterion, model_choice, lr = 5e-1, loc
     test_results = net.test(X_test, y_test, criterion)
 
     ### train the model
-    net.train(X_train, y_train, opt, criterion, lr, local_epochs, local_batch_amt, c, scaffold, use_c)
+    net.train(X_train, y_train, opt, criterion, lr, local_epochs, local_batch_amt, c, scaffold, use_c, nb_parameters)
 
  
     ### return the new weights and the test results

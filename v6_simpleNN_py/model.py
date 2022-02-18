@@ -1,3 +1,4 @@
+from turtle import up
 import torch
 import torch.nn as nn
 import numpy as np
@@ -113,7 +114,7 @@ class model(nn.Module):
   
 
 
-    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c):
+    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c, nb_parameters):
     #print(X_train)
     #iterate through data
         batch_size = math.floor(X_train.size()[0]/batch_amount)
@@ -129,6 +130,8 @@ class model(nn.Module):
                 #print(out)
                 loss = criterion(out, y_train_batch)
                 loss.backward()
+                self.DGD_update(lr, nb_parameters)
+                '''
                 if scaffold :
                     if batch == batch_amount - 1:
                         self.scaffold_update(lr, c, True, batch_amount)
@@ -136,6 +139,7 @@ class model(nn.Module):
                         self.scaffold_update(lr, c, False, batch_amount)
                 else : 
                     optimizer.step()
+                '''
             #sys.exit()
 
     def test(self, X_test, y_test, criterion):
@@ -172,3 +176,14 @@ class model(nn.Module):
 
         self.set_params(updated_param_dict)
         #print(lr)
+
+    def DGD_update(self, lr, parameters):
+        num_neighbours = parameters.shape[0]
+        params = self.get_params()
+        updated_param_dict = {}
+        for para, param in zip(self.parameters(), params):
+            accum_param = torch.zeros_like(para)
+            for i in range(num_neighbours):
+                accum_param += (1/num_neighbours) * parameters[i][param]
+            updated_param_dict[param] = accum_param - lr * para.grad
+        self.set_params(updated_param_dict)
