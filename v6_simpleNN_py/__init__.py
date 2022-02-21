@@ -16,7 +16,7 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, parameters, nb_parameters, criterion, model_choice, lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True):
+def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd = False, criterion = torch.nn.CrossEntropyLoss(),  lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True):
     ### create net from given architeture
     net = model(dataset, model_choice, ci)
     net = net.double() #apparently I need this
@@ -32,7 +32,16 @@ def RPC_train_and_test(data, parameters, nb_parameters, criterion, model_choice,
     y_test = torch.as_tensor(y_test_arr, dtype=torch.int64)
     num_samples = X_train.size()[0]
     ### initialize the weights and biases from input
-    net.set_params(parameters)
+    if dgd:
+        params_to_set = {}
+        num_neighbours = parameters.shape[0]
+
+        for para in parameters:
+            for neighbour in range(num_neighbours):
+                params_to_set[para] += (1/num_neighbours) * parameters[neighbour][para]
+        net.set_params(params_to_set)
+    else:
+        net.set_params(parameters)
 
     if model_choice == "CNN":        
         reshape_size = int(math.sqrt(X_test.shape[1]))

@@ -42,11 +42,11 @@ client.setup_encryption(privkey)
 #torch
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-2
+lr_local = 5e-1
 lr_global = 1 #only affects scaffold. 1 is recommended
 
 local_epochs = 1 #local epochs between each communication round
-local_batch_amt = 10 #amount of  batches the data gets split up in at each client   
+local_batch_amt = 1 #amount of  batches the data gets split up in at each client   
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
@@ -54,7 +54,7 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
 week = "datafiles/w27/"
 
-model_choice = "CNN" #decides the neural network; either FNN or CNN
+model_choice = "FNN" #decides the neural network; either FNN or CNN
 save_file = True # whether to save results in .npy files
 
 # these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
@@ -68,8 +68,8 @@ use_sizes = True # if false, the non-weighted average is used in federated avera
 #federated settings
 num_global_rounds = 100 #number of communication rounds
 num_clients = 10 #number of clients (make sure this matches the amount of running vantage6 clients)
-num_runs = 3 #amount of experiments to run using consecutive seeds
-seed_offset = 1 #decides which seeds to use: seed = seed_offset + current_run_number
+num_runs = 4 #amount of experiments to run using consecutive seeds
+seed_offset = 0 #decides which seeds to use: seed = seed_offset + current_run_number
 
 ### end of settings ###
 
@@ -95,7 +95,7 @@ else :
 # DGD stuff
 #connectivity matrix
 
-'''
+
 A_alt = np.array([[0,1,9],
                 [1,0,2],
                 [2,1,3],
@@ -117,7 +117,7 @@ A_alt = np.array([[0],
                 [7],
                 [8],
                 [9]])
-
+'''
 for run in range(num_runs):
     acc_results = np.zeros((num_clients, num_global_rounds))
 
@@ -128,6 +128,7 @@ for run in range(num_runs):
     parameters_full = np.array([parameters]*num_clients)
 
     for round in range(num_global_rounds):
+        print("starting round ", round)
         task_list = np.empty(num_clients, dtype=object)
 
         for i, org_id in enumerate(ids[0:num_clients]):
@@ -137,8 +138,9 @@ for run in range(num_runs):
             input_= {
                 'method' : 'train_and_test',
                 'kwargs' : {
-                    'parameters' : parameters,
-                    'criterion': criterion,
+                    'parameters' : parameters_full[i],
+                    'nb_parameters' : parameters,
+                    #'criterion': criterion,
                     'optimizer': optimizer,
                     'model_choice' : model_choice,
                     'lr' : lr_local,
@@ -148,12 +150,12 @@ for run in range(num_runs):
                     }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:fedNN10",
+            image = "sgarst/federated-learning:fedDGD2",
             organization_ids=[org_id],
             collaboration_id= 1
                 
             )
-        task_list[i] =  round_task
+            task_list[i] =  round_task
 
         finished = False
         parameters_full = np.empty(num_clients, dtype=object)
@@ -177,23 +179,25 @@ for run in range(num_runs):
                 finished = True
             print("waiting")
             time.sleep(1)
+        if (round % 10) == 0:
+            clear_database()
 
 
     if save_file:
         #prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
         #newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
         ### save arrays to files
-        with open (week + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
+        with open (week + "dgd_ring" + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
             np.save(f, acc_results)
-
+'''
         with open (week + prefix + "_global_seed"+ str(seed) + ".npy", 'wb') as f2:
             np.save(f2, complete_test_results)
             # clear database every 10 rounds
-
+'''
 
 
 print(repr(acc_results))
-print(repr(complete_test_results))
+#print(repr(complete_test_results))
 #print(np.mean(acc_results, axis=0))
 print("final runtime", (time.time() - start_time)/60)
 x = np.arange(num_global_rounds)
@@ -206,11 +210,11 @@ for i in range (num_clients):#
    plt.plot(x, acc_results[i,:])
 legend = ["client " + str(i) for i in range(num_clients)]
 legend.append("full")
-plt.plot(x, complete_test_results)
+#plt.plot(x, complete_test_results)
 plt.legend(legend)
 plt.show()
 
-plt.plot(x, c_log)
-plt.plot(x, ci_log)
+#plt.plot(x, c_log)
+#plt.plot(x, ci_log)
 #plt.show()
     ### generate new model parameters
