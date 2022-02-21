@@ -37,6 +37,7 @@ sample_imbalance = False
 use_scaffold = False
 use_c = True
 use_sizes = False
+use_dgd = True
 #c = np.zeros(4)
 
 #federated settings
@@ -66,7 +67,7 @@ client = ClientMockProtocol(
     datasets= datasets,
     module="v6_simpleNN_py"
 )
-'''
+
 A_alt = np.array([[0,1,9],
                 [1,0,2],
                 [2,1,3],
@@ -88,7 +89,7 @@ A_alt = np.array([[0],
                 [7],
                 [8],
                 [9]])
-
+'''
 
 organizations = client.get_organizations_in_my_collaboration()
 org_ids = [organization["id"] for organization in organizations]
@@ -111,6 +112,7 @@ for round in range(num_global_rounds):
                     'parameters' : local_parameters[i],
                     'nb_parameters' : parameters,
                     'criterion': criterion,
+                    'dgd': use_dgd,
                     'optimizer': optimizer,
                     'model_choice' : model_choice,
                     'lr' : lr_local,

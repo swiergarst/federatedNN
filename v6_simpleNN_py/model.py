@@ -129,6 +129,7 @@ class model(nn.Module):
                 #print(out)
                 loss = criterion(out, y_train_batch)
                 loss.backward()
+                #self.DGD_update(lr, nb_parameters)
                 if scaffold :
                     if batch == batch_amount - 1:
                         self.scaffold_update(lr, c, True, batch_amount)
@@ -136,7 +137,7 @@ class model(nn.Module):
                         self.scaffold_update(lr, c, False, batch_amount)
                 else : 
                     optimizer.step()
-
+                
             #sys.exit()
 
     def test(self, X_test, y_test, criterion):

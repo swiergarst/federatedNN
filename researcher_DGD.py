@@ -61,6 +61,7 @@ save_file = True # whether to save results in .npy files
 class_imbalance = False
 sample_imbalance = True
 
+use_dgd = True
 use_scaffold= False # if true, uses scaffold instead of federated averaging
 use_c = True # if false, all control variates are kept 0 in SCAFFOLD (debug purposes)
 use_sizes = True # if false, the non-weighted average is used in federated averaging (instead of the weighted average)
@@ -141,6 +142,7 @@ for run in range(num_runs):
                     'parameters' : parameters_full[i],
                     'nb_parameters' : parameters,
                     #'criterion': criterion,
+                    'dgd' : use_dgd,
                     'optimizer': optimizer,
                     'model_choice' : model_choice,
                     'lr' : lr_local,

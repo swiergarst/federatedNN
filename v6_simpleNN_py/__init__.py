@@ -34,11 +34,12 @@ def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd
     ### initialize the weights and biases from input
     if dgd:
         params_to_set = {}
-        num_neighbours = parameters.shape[0]
+        num_neighbours = nb_parameters.shape[0]
 
         for para in parameters:
+            params_to_set[para] = torch.zeros_like(parameters[para])
             for neighbour in range(num_neighbours):
-                params_to_set[para] += (1/num_neighbours) * parameters[neighbour][para]
+                params_to_set[para] += (1/num_neighbours) * nb_parameters[neighbour][para]
         net.set_params(params_to_set)
     else:
         net.set_params(parameters)
