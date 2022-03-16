@@ -29,11 +29,13 @@ lr_local = 5e-1
 lr_global = 5e-1
 local_epochs = 1
 local_batch_amt = 1
+rho = 1
 
 # boolean settings
 save_file = False
 class_imbalance = False
 sample_imbalance = False
+
 use_scaffold = False
 use_c = True
 use_sizes = False
@@ -47,7 +49,7 @@ seed_offset = 0
 
 
 #dataset
-dataset = 'A2' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
+dataset = 'MNIST_2class' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
 model_choice = 'CNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 ci = np.array(ci)
@@ -94,7 +96,9 @@ for round in range(num_global_rounds):
                     'c' : c, 
                     'ci': ci[i],
                     'dataset' : dataset, 
-                    'use_c' : use_c
+                    'use_c' : use_c,
+                    'admm' : use_admm,
+                    'rho' : rho
                     }
             },
             organization_ids=[org_ids[i]]
@@ -114,44 +118,8 @@ for round in range(num_global_rounds):
             ci[task_i] = result[0,3]
         finished = True
     
-    print(org_ids)
-    
 
-    '''
-    for i in range(num_clients):
-        param_log_local[i, round, :] = local_parameters[i]['fc2.bias'].numpy()
-    '''
-    '''
-    round_task = client.create_new_task(
-            input_= {
-                'method' : 'train_and_test',
-                'kwargs' : {
-                    'parameters' : parameters,
-                    'criterion': criterion,
-                    'optimizer': optimizer,
-                    'model_choice' : model_choice,
-                    'lr' : lr_local,
-                    'local_epochs' : local_epochs,
-                    'local_batch_amt' : local_batch_amt,
-                    'scaffold' : use_scaffold,
-                    'c' : c, 
-                    'dataset' : dataset, 
-                    'use_c' : use_c,
-                    'ci' : ci[0]
-                    }
-            },
-            organization_ids=org_ids
-        )
 
-    ### aggregate responses
-    results = np.array(client.get_results(round_task.get("id")))
-    # store responses
-    
-    local_parameters = results[:,0]
-    acc_results[:, round] = results[:,1]
-    dataset_sizes = results[:,2]
-    ci = results[:,3]
-    '''
     if use_scaffold:
         parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
         #parameters = average(local_parameters, dataset_sizes, None, dataset,use_sizes=False, use_imbalances=False)

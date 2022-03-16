@@ -58,7 +58,7 @@ def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd
     test_results = net.test(X_test, y_test, criterion)
 
     ### train the model
-    net.train(X_train, y_train, opt, criterion, lr, local_epochs, local_batch_amt, c, scaffold, use_c, nb_parameters)
+    net.train(X_train, y_train, opt, criterion, lr, local_epochs, local_batch_amt, c, scaffold, use_c, nb_parameters,rho=rho, admm=admm)
 
  
     ### return the new weights and the test results

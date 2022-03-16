@@ -113,7 +113,7 @@ class model(nn.Module):
   
 
 
-    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c, nb_parameters):
+    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c,rho=0, admm = False, nb_parameters=None):
     #print(X_train)
     #iterate through data
         batch_size = math.floor(X_train.size()[0]/batch_amount)
@@ -127,9 +127,16 @@ class model(nn.Module):
                 ### forward pass, backward pass, optimizer step
                 out = self.forward(X_train_batch)
                 #print(out)
-                loss = criterion(out, y_train_batch)
-                loss.backward()
+
+
                 #self.DGD_update(lr, nb_parameters)
+                if admm:
+                    loss = self.admm_loss(out, y_train_batch, self.parameters, self.ci, c, rho)
+                else:
+                    loss = criterion(out, y_train_batch)
+
+                loss.backward()
+
                 if scaffold :
                     if batch == batch_amount - 1:
                         self.scaffold_update(lr, c, True, batch_amount)
@@ -174,6 +181,23 @@ class model(nn.Module):
 
         self.set_params(updated_param_dict)
         #print(lr)
+
+    def admm_loss(self, output, target, x, y, z, rho):
+        fx = nn.CrossEntropyLoss()
+        fx_loss = fx(output, target)
+
+        first_order = 0
+        second_order = 0
+        for para, param in zip(x, self.get_params()):
+            sub = torch.reshape(torch.sub(para, z[param]), (-1,))
+            y_res = torch.reshape(y[param], (-1,))
+            first_order += torch.dot(y_res, sub)
+            second_order = (rho/2) * torch.dot(sub, sub)
+
+        #print(fx_loss)
+        #print(first_order.shape)
+        #print(second_order.shape)
+        return(fx_loss + first_order + second_order)
 '''
     def DGD_update(self, lr, parameters):
         num_neighbours = parameters.shape[0]
