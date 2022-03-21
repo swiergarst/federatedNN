@@ -20,8 +20,8 @@ from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
 from helper_functions import heatmap
-from config_functions import get_config, clear_database, get_save_str
-from comp_functions import average, scaffold
+from fed_common.config_functions import get_config, clear_database, get_save_str
+from fed_common.comp_functions import average, scaffold
 start_time = time.time()
 ### connect to server
 
@@ -46,7 +46,7 @@ optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 1 #only affects scaffold. 1 is recommended
 
-local_epochs = 1 #local epochs between each communication round
+local_epochs = 10 #local epochs between each communication round
 local_batch_amt = 1 #amount of  batches the data gets split up in at each client   
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]

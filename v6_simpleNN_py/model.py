@@ -182,22 +182,7 @@ class model(nn.Module):
         self.set_params(updated_param_dict)
         #print(lr)
 
-    def admm_loss(self, output, target, x, y, z, rho):
-        fx = nn.CrossEntropyLoss()
-        fx_loss = fx(output, target)
 
-        first_order = 0
-        second_order = 0
-        for para, param in zip(x, self.get_params()):
-            sub = torch.reshape(torch.sub(para, z[param]), (-1,))
-            y_res = torch.reshape(y[param], (-1,))
-            first_order += torch.dot(y_res, sub)
-            second_order = (rho/2) * torch.dot(sub, sub)
-
-        #print(fx_loss)
-        #print(first_order.shape)
-        #print(second_order.shape)
-        return(fx_loss + first_order + second_order)
 '''
     def DGD_update(self, lr, parameters):
         num_neighbours = parameters.shape[0]
