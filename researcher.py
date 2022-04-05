@@ -13,14 +13,15 @@ import time
 import pandas as pd
 
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 
 from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
 from helper_functions import heatmap
-from config_functions import get_config, clear_database, get_save_str
-from comp_functions import average, scaffold
+from fed_common.config_functions import get_config, clear_database, get_save_str
+from fed_common.comp_functions import average, scaffold
 start_time = time.time()
 ### connect to server
 
@@ -42,28 +43,34 @@ client.setup_encryption(privkey)
 #torch
 criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
-lr_local = 5e-2
+lr_local = 5e-1
 lr_global = 1 #only affects scaffold. 1 is recommended
 
-local_epochs = 1 #local epochs between each communication round
-local_batch_amt = 10 #amount of  batches the data gets split up in at each client   
+local_epochs = 10 #local epochs between each communication round
+local_batch_amt = 1 #amount of  batches the data gets split up in at each client   
+
+early_stopping = False
+stopping_threshold = 10  
+
+
 
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
-week = "datafiles/w27/"
+dataset = 'fashion_MNIST' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
+week = "afstuderen/datafiles/nn/"
 
-model_choice = "CNN" #decides the neural network; either FNN or CNN
+model_choice = "FNN" #decides the neural network; either FNN or CNN
 save_file = True # whether to save results in .npy files
 
 # these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
 class_imbalance = False
-sample_imbalance = True
+sample_imbalance = False
 
 use_scaffold= False # if true, uses scaffold instead of federated averaging
 use_c = True # if false, all control variates are kept 0 in SCAFFOLD (debug purposes)
 use_sizes = True # if false, the non-weighted average is used in federated averaging (instead of the weighted average)
+use_dgd = False
 
 #federated settings
 num_global_rounds = 100 #number of communication rounds
@@ -73,8 +80,7 @@ seed_offset = 1 #decides which seeds to use: seed = seed_offset + current_run_nu
 
 ### end of settings ###
 
-prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
-
+prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt, use_dgd)
 
 
 
@@ -112,7 +118,7 @@ for run in range(num_runs):
             old_ci[i] = ci[i].copy()
         #old_ci = ci
         #print("initial old ci: ", old_ci)
-        print("starting round", round)
+        print("run ", run, ",round ", round)
 
         task_list = np.empty(num_clients, dtype=object)
         
@@ -136,14 +142,14 @@ for run in range(num_runs):
                         'c' : c, 
                         'ci': ci[i],
                         'dataset' : dataset_tosend, 
-                        'use_c' : use_c
+                        'early_stopping' : early_stopping,
+                        'threshold' : stopping_threshold
                         }
                 },
                 name =  prefix + ", round " + str(round),
                 image = "sgarst/federated-learning:fedNN10",
                 organization_ids=[org_id],
                 collaboration_id= 1
-                
             )
             task_list[i] =  round_task
 
@@ -170,7 +176,7 @@ for run in range(num_runs):
             #task_list = np.copy(new_task_list)
             if not (None in local_parameters):
                 finished = True
-            print("waiting")
+            #print("waiting")
             time.sleep(1)
 
         if use_scaffold:

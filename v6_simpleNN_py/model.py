@@ -113,11 +113,13 @@ class model(nn.Module):
   
 
 
-    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, use_c, nb_parameters):
+    def train(self, X_train, y_train, optimizer, criterion, lr, epochs, batch_amount, c,  scaffold, early_stopping, threshold):
     #print(X_train)
     #iterate through data
         batch_size = math.floor(X_train.size()[0]/batch_amount)
+
         for e in range (epochs):
+
             for batch in range(batch_amount):
                 X_train_batch = X_train[batch* batch_size: (batch+1) * batch_size]
                 y_train_batch = y_train[batch* batch_size: (batch+1) * batch_size]
@@ -137,7 +139,10 @@ class model(nn.Module):
                         self.scaffold_update(lr, c, False, batch_amount)
                 else : 
                     optimizer.step()
-                
+
+            if early_stopping and loss < threshold:
+                break
+            return e
             #sys.exit()
 
     def test(self, X_test, y_test, criterion):

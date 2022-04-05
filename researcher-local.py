@@ -11,11 +11,14 @@ import sys
 import os
 import time
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
+sys.path.insert(1, os.path.join(sys.path[0], '../..'))
 
 from vantage6.tools.mock_client import ClientMockProtocol
 from v6_simpleNN_py.model import model
-from config_functions import get_datasets, get_config,get_full_dataset
-from comp_functions import average, scaffold
+#from fed_common import config_functions, comp_functions
+
+from fed_common.config_functions import get_datasets, get_config,get_full_dataset
+from fed_common.comp_functions import average, scaffold
 
 start_time = time.time()
 
@@ -27,7 +30,7 @@ criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 5e-1
-local_epochs = 1
+local_epochs = 10
 local_batch_amt = 1
 
 # boolean settings
@@ -47,7 +50,7 @@ seed_offset = 0
 
 
 #dataset
-dataset = 'A2' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
+dataset = 'MNIST_2class' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
 model_choice = 'CNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 ci = np.array(ci)

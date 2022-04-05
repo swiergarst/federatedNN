@@ -16,7 +16,7 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd = False, criterion = torch.nn.CrossEntropyLoss(),  lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True):
+def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd = False, criterion = torch.nn.CrossEntropyLoss(),  lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True, early_stopping = False, threshold = 10):
     ### create net from given architeture
     net = model(dataset, model_choice, ci)
     net = net.double() #apparently I need this
@@ -58,11 +58,11 @@ def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd
     test_results = net.test(X_test, y_test, criterion)
 
     ### train the model
-    net.train(X_train, y_train, opt, criterion, lr, local_epochs, local_batch_amt, c, scaffold, use_c, nb_parameters)
+    lepochs_used = net.train(X_train, y_train, opt, criterion, lr, local_epochs, local_batch_amt, c, scaffold, early_stopping, threshold)
 
  
     ### return the new weights and the test results
-    return (net.get_params(), test_results, num_samples, net.ci)
+    return (net.get_params(), test_results, num_samples, net.ci, lepochs_used)
 
 
 def RPC_dicttest(data, setting):
