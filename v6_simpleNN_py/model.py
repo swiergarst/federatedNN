@@ -129,9 +129,13 @@ class model(nn.Module):
                 ### forward pass, backward pass, optimizer step
                 out = self.forward(X_train_batch)
                 #print(out)
+
+
+                #self.DGD_update(lr, nb_parameters)
+
                 loss = criterion(out, y_train_batch)
                 loss.backward()
-                #self.DGD_update(lr, nb_parameters)
+
                 if scaffold :
                     if batch == batch_amount - 1:
                         self.scaffold_update(lr, c, True, batch_amount)
@@ -179,6 +183,8 @@ class model(nn.Module):
 
         self.set_params(updated_param_dict)
         #print(lr)
+
+
 '''
     def DGD_update(self, lr, parameters):
         num_neighbours = parameters.shape[0]

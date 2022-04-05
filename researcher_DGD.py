@@ -58,8 +58,8 @@ model_choice = "FNN" #decides the neural network; either FNN or CNN
 save_file = True # whether to save results in .npy files
 
 # these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
-class_imbalance = False
-sample_imbalance = True
+class_imbalance = True
+sample_imbalance = False
 
 use_dgd = True
 use_scaffold= False # if true, uses scaffold instead of federated averaging
@@ -74,7 +74,7 @@ seed_offset = 0 #decides which seeds to use: seed = seed_offset + current_run_nu
 
 ### end of settings ###
 
-prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt)
+prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt, use_dgd)
 
 
 
@@ -94,7 +94,7 @@ else :
 
 
 # DGD stuff
-#connectivity matrix
+#connectivity matrix : ring structure
 
 
 A_alt = np.array([[0,1,9],
@@ -152,7 +152,7 @@ for run in range(num_runs):
                     }
             },
             name =  prefix + ", round " + str(round),
-            image = "sgarst/federated-learning:fedDGD2",
+            image = "sgarst/federated-learning:fedDGD3",
             organization_ids=[org_id],
             collaboration_id= 1
                 
@@ -189,7 +189,7 @@ for run in range(num_runs):
         #prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
         #newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
         ### save arrays to files
-        with open (week + "dgd_ring" + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
+        with open (week  + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
             np.save(f, acc_results)
 '''
         with open (week + prefix + "_global_seed"+ str(seed) + ".npy", 'wb') as f2:

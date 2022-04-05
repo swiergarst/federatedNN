@@ -67,6 +67,8 @@ save_file = True # whether to save results in .npy files
 class_imbalance = False
 sample_imbalance = False
 
+
+use_dgd = False
 use_scaffold= False # if true, uses scaffold instead of federated averaging
 use_c = True # if false, all control variates are kept 0 in SCAFFOLD (debug purposes)
 use_sizes = True # if false, the non-weighted average is used in federated averaging (instead of the weighted average)
@@ -75,12 +77,25 @@ use_dgd = False
 #federated settings
 num_global_rounds = 100 #number of communication rounds
 num_clients = 10 #number of clients (make sure this matches the amount of running vantage6 clients)
-num_runs = 3 #amount of experiments to run using consecutive seeds
-seed_offset = 1 #decides which seeds to use: seed = seed_offset + current_run_number
+num_runs = 4 #amount of experiments to run using consecutive seeds
+seed_offset = 0 #decides which seeds to use: seed = seed_offset + current_run_number
 
 ### end of settings ###
 
 prefix = get_save_str(dataset, model_choice, class_imbalance, sample_imbalance, use_scaffold, use_sizes, lr_local, local_epochs, local_batch_amt, use_dgd)
+
+
+# generation of ring graph (neighbours generated randomly)
+clients_seq = np.arange(num_clients)
+
+np.random.shuffle(clients_seq)
+
+A_alt = np.zeros((num_clients, 3), dtype=int)
+
+for client_i, node in enumerate (clients_seq):
+    A_alt[node,0] = node
+    A_alt[node,1] = clients_seq[client_i - 1]
+    A_alt[node,2] = clients_seq[(client_i + 1) % num_clients]
 
 
 
@@ -109,6 +124,8 @@ for run in range(num_runs):
     ci = np.array(ci)
     old_ci = np.array([c.copy()] * num_clients)
     
+    parameters_full = np.array([parameters]*num_clients)
+
 
     #test model for global testing
     testModel = model(dataset_tosend, model_choice, c)
@@ -126,13 +143,16 @@ for run in range(num_runs):
         for i, org_id in enumerate(ids[0:num_clients]):
             #print("org id \t ids[i]")
             #print(org_id, "\t", ids[i])
+            nb_parameters = parameters_full[A_alt[i,:]]
 
             round_task = client.post_task(
                 input_= {
                     'method' : 'train_and_test',
                     'kwargs' : {
                         'parameters' : parameters,
-                        'criterion': criterion,
+                        'nb_parameters' : nb_parameters,
+                        'dgd' : use_dgd,
+                        #'criterion': criterion,
                         'optimizer': optimizer,
                         'model_choice' : model_choice,
                         'lr' : lr_local,
@@ -147,7 +167,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedNN10",
+                image = "sgarst/federated-learning:fedDGD3",
                 organization_ids=[org_id],
                 collaboration_id= 1
             )
@@ -178,18 +198,18 @@ for run in range(num_runs):
                 finished = True
             #print("waiting")
             time.sleep(1)
+        if not use_dgd:
+            if use_scaffold:
+                #ci = results[:,3]
 
-        if use_scaffold:
-            #ci = results[:,3]
-
-            parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
-            #print("old ci: ", old_ci)
-            cmap.save_round(round, ci, c)
-            c_log[round] = c['lin_layers.0.weight'].max()
-            for i in range(num_clients):
-                ci_log[round, i] = ci[i]['lin_layers.0.weight'].max()
-        else:
-            parameters = average(local_parameters, dataset_sizes, None, dataset, model_choice, use_imbalances=False, use_sizes= use_sizes)
+                parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
+                #print("old ci: ", old_ci)
+                cmap.save_round(round, ci, c)
+                c_log[round] = c['lin_layers.0.weight'].max()
+                for i in range(num_clients):
+                    ci_log[round, i] = ci[i]['lin_layers.0.weight'].max()
+            else:
+                parameters = average(local_parameters, dataset_sizes, None, dataset, model_choice, use_imbalances=False, use_sizes= use_sizes)
 
 
         newmap.save_round(round, local_parameters, parameters)

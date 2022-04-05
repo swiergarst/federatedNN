@@ -16,7 +16,7 @@ def master_task():
 
 ### RPC task
 ### This will contain the main training loop, including the forward and backward passes
-def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd = False, criterion = torch.nn.CrossEntropyLoss(),  lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', use_c = True, early_stopping = False, threshold = 10):
+def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd = False, criterion = torch.nn.CrossEntropyLoss(),  lr = 5e-1, local_epochs = 1, local_batch_amt = 1, scaffold = False, c = None, ci = None,  optimizer = 'SGD', dataset = 'MNIST_2class', early_stopping = False, threshold = 10):
     ### create net from given architeture
     net = model(dataset, model_choice, ci)
     net = net.double() #apparently I need this
