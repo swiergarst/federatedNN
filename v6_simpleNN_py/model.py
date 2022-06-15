@@ -4,6 +4,7 @@ import numpy as np
 import math
 import sys
 
+from sklearn.metrics import roc_curve
 
 
 
@@ -154,12 +155,19 @@ class model(nn.Module):
         with torch.no_grad():
             #for (x, y) in zip(X_test, y_test):
             output = self.forward(X_test)
+            fpr, tpr, thr = roc_curve(Y, output.numpy()[:,1], drop_intermediate=False)
+
             #loss = criterion(output, y)
             # for now, only look at accuracy, using criterion we can expand this later on 
             _, prediction = torch.max(output.data, 1)
             correct += (prediction == y_test).sum().item()
-        # return accuracy
-        return (correct / X_test.size()[0])
+            results = {
+                "accuracy" : correct/X_test.size()[0],
+                "FPR": fpr,
+                "TPR" : tpr
+            }
+        # return result metrics
+        return (results)
 
     def set_params(self, params):
         self.load_state_dict(params)

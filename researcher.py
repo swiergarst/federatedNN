@@ -46,7 +46,7 @@ optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 1 #only affects scaffold. 1 is recommended
 
-local_epochs = 10 #local epochs between each communication round
+local_epochs = 1 #local epochs between each communication round
 local_batch_amt = 1 #amount of  batches the data gets split up in at each client   
 
 early_stopping = False
@@ -58,21 +58,21 @@ ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
 dataset = 'fashion_MNIST' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
-week = "afstuderen/datafiles/nn/"
+week = "afstuderen/datafiles/FNN/fashion_MNIST_ci/"
 
 model_choice = "FNN" #decides the neural network; either FNN or CNN
 save_file = True # whether to save results in .npy files
 
 # these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
-class_imbalance = False
+class_imbalance = True
 sample_imbalance = False
 
 
 use_dgd = False
-use_scaffold= False # if true, uses scaffold instead of federated averaging
+use_scaffold= True# if true, uses scaffold instead of federated averaging
 use_c = True # if false, all control variates are kept 0 in SCAFFOLD (debug purposes)
 use_sizes = True # if false, the non-weighted average is used in federated averaging (instead of the weighted average)
-use_dgd = False
+
 
 #federated settings
 num_global_rounds = 100 #number of communication rounds
@@ -138,8 +138,6 @@ for run in range(num_runs):
         print("run ", run, ",round ", round)
 
         task_list = np.empty(num_clients, dtype=object)
-        
-
         for i, org_id in enumerate(ids[0:num_clients]):
             #print("org id \t ids[i]")
             #print(org_id, "\t", ids[i])
@@ -161,9 +159,9 @@ for run in range(num_runs):
                         'scaffold' : use_scaffold,
                         'c' : c, 
                         'ci': ci[i],
-                        'dataset' : dataset_tosend, 
-                        'early_stopping' : early_stopping,
-                        'threshold' : stopping_threshold
+                        'dataset' : dataset_tosend
+                        #'early_stopping' : early_stopping,
+                        #'threshold' : stopping_threshold
                         }
                 },
                 name =  prefix + ", round " + str(round),
