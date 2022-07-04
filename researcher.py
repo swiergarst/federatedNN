@@ -19,16 +19,17 @@ from v6_simpleNN_py.model import model
 from io import BytesIO
 from vantage6.tools.util import info
 from vantage6.client import Client
-from helper_functions import heatmap
+#from helper_functions import heatmap
 from fed_common.config_functions import get_config, clear_database, get_save_str
 from fed_common.comp_functions import average, scaffold
 start_time = time.time()
 ### connect to server
+dir_path = os.path.dirname(os.path.realpath(__file__))
 
 print("Attempt login to Vantage6 API")
 client = Client("http://localhost", 5000, "/api")
 client.authenticate("researcher", "1234")
-privkey = "/home/swier/.local/share/vantage6/node/privkey_testOrg0.pem"
+privkey = dir_path + "/../../FedvsCent/privkeys/privkey_testOrg0.pem"
 client.setup_encryption(privkey)
 
 
@@ -57,19 +58,19 @@ stopping_threshold = 10
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = 'fashion_MNIST' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
+dataset = '3node' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
 week = "afstuderen/datafiles/FNN/fashion_MNIST_ci/"
 
 model_choice = "FNN" #decides the neural network; either FNN or CNN
 save_file = True # whether to save results in .npy files
 
 # these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
-class_imbalance = True
+class_imbalance = False
 sample_imbalance = False
 
 
 use_dgd = False
-use_scaffold= True# if true, uses scaffold instead of federated averaging
+use_scaffold= False# if true, uses scaffold instead of federated averaging
 use_c = True # if false, all control variates are kept 0 in SCAFFOLD (debug purposes)
 use_sizes = True # if false, the non-weighted average is used in federated averaging (instead of the weighted average)
 
@@ -99,10 +100,10 @@ for client_i, node in enumerate (clients_seq):
 
 
 
-prevmap = heatmap(num_clients, num_global_rounds)
-newmap = heatmap(num_clients, num_global_rounds)
+#prevmap = heatmap(num_clients, num_global_rounds)
+#newmap = heatmap(num_clients, num_global_rounds)
 #if use_scaffold:
-cmap = heatmap(num_clients , num_global_rounds)
+#cmap = heatmap(num_clients , num_global_rounds)
 c_log = np.zeros((num_global_rounds))
 ci_log = np.zeros((num_global_rounds, num_clients))
 
@@ -165,7 +166,7 @@ for run in range(num_runs):
                         }
                 },
                 name =  prefix + ", round " + str(round),
-                image = "sgarst/federated-learning:fedDGD3",
+                image = "sgarst/federated-learning:fedNN11",
                 organization_ids=[org_id],
                 collaboration_id= 1
             )
@@ -202,7 +203,7 @@ for run in range(num_runs):
 
                 parameters, c = scaffold(dataset, model_choice, parameters, local_parameters, c, old_ci, ci, lr_global, use_c = use_c)
                 #print("old ci: ", old_ci)
-                cmap.save_round(round, ci, c)
+                #cmap.save_round(round, ci, c)
                 c_log[round] = c['lin_layers.0.weight'].max()
                 for i in range(num_clients):
                     ci_log[round, i] = ci[i]['lin_layers.0.weight'].max()
@@ -210,7 +211,7 @@ for run in range(num_runs):
                 parameters = average(local_parameters, dataset_sizes, None, dataset, model_choice, use_imbalances=False, use_sizes= use_sizes)
 
 
-        newmap.save_round(round, local_parameters, parameters)
+        #newmap.save_round(round, local_parameters, parameters)
         # 'global' test
         testModel.set_params(parameters)
         complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
@@ -218,10 +219,10 @@ for run in range(num_runs):
             clear_database()
     
     if save_file:
-        if use_scaffold:    
-            cmap.save_map(week + prefix + "cmap_seed" + str(seed) + ".npy")
-        prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
-        newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
+        #if use_scaffold:    
+            #cmap.save_map(week + prefix + "cmap_seed" + str(seed) + ".npy")
+        #prevmap.save_map(week + prefix + "prevmap_seed" + str(seed) + ".npy")
+        #newmap.save_map(week + prefix + "newmap_seed" + str(seed) + ".npy")
         ### save arrays to files
         with open (week + prefix + "local_seed" + str(seed) + ".npy", 'wb') as f:
             np.save(f, acc_results)

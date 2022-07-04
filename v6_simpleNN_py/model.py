@@ -155,7 +155,7 @@ class model(nn.Module):
         with torch.no_grad():
             #for (x, y) in zip(X_test, y_test):
             output = self.forward(X_test)
-            fpr, tpr, thr = roc_curve(Y, output.numpy()[:,1], drop_intermediate=False)
+            fpr, tpr, thr = roc_curve(y_test, output.numpy()[:,1], drop_intermediate=False)
 
             #loss = criterion(output, y)
             # for now, only look at accuracy, using criterion we can expand this later on 

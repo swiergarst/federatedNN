@@ -61,8 +61,8 @@ testModel = model(dataset, model_choice, c)
 testModel.double()
 
 # arrays to store results
-acc_results = np.zeros((num_clients, num_global_rounds))
-global_acc_results = np.zeros((num_global_rounds))
+acc_results = np.empty((num_clients, num_global_rounds), dtype=object)
+global_acc_results = np.empty((num_global_rounds), dtype=object)
 param_log_local = np.zeros((num_clients, num_global_rounds, 2) )
 param_log_global = np.zeros((num_global_rounds, 2))
 
@@ -99,9 +99,6 @@ for round in range(num_global_rounds):
                     'c' : c, 
                     'ci': ci[i],
                     'dataset' : dataset, 
-                    'use_c' : use_c,
-                    'admm' : use_admm,
-                    'rho' : rho
                     }
             },
             organization_ids=[org_ids[i]]
