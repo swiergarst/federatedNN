@@ -30,13 +30,13 @@ criterion = nn.CrossEntropyLoss()
 optimizer = 'SGD'
 lr_local = 5e-1
 lr_global = 5e-1
-local_epochs = 10
+local_epochs = 1
 local_batch_amt = 1
 rho = 1
 
 # boolean settings
 save_file = False
-class_imbalance = False
+class_imbalance = True
 sample_imbalance = False
 
 use_scaffold = False
@@ -45,15 +45,15 @@ use_sizes = False
 #c = np.zeros(4)
 
 #federated settings
-num_global_rounds = 10
-num_clients = 10
+num_global_rounds = 20
+num_clients = 3
 num_runs = 1
 seed_offset = 0
 
 
 #dataset
-dataset = 'MNIST_2class' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
-model_choice = 'CNN'
+dataset = '3node' #options: MNIST_2class, MNIST, MNIST_4class, fashion_MNIST, A2
+model_choice = 'FNN'
 datasets, parameters, X_test, y_test, c, ci = get_config(dataset, model_choice, num_clients, class_imbalance, sample_imbalance)
 ci = np.array(ci)
 #test model for global testing
@@ -61,7 +61,7 @@ testModel = model(dataset, model_choice, c)
 testModel.double()
 
 # arrays to store results
-acc_results = np.empty((num_clients, num_global_rounds), dtype=object)
+test_results = np.empty((num_clients, num_global_rounds), dtype=object)
 global_acc_results = np.empty((num_global_rounds), dtype=object)
 param_log_local = np.zeros((num_clients, num_global_rounds, 2) )
 param_log_global = np.zeros((num_global_rounds, 2))
@@ -113,7 +113,7 @@ for round in range(num_global_rounds):
             result = np.array(client.get_results(task.get("id")))
             #print(result[0,0])
             local_parameters[task_i] = result[0,0]
-            acc_results[task_i, round] = result[0,1]
+            test_results[task_i, round] = result[0,1]
             dataset_sizes[task_i] = result[0,2]
             ci[task_i] = result[0,3]
         finished = True
@@ -146,8 +146,11 @@ if save_file:
 #print(repr(param_log_local))
 print("final runtime: ", (time.time() - start_time)/ 60)
 x = np.arange(num_global_rounds)
-plt.plot(x, np.mean(acc_results, axis=0))
-plt.plot(x,global_acc_results)
+acc = np.array([[test_results[i,j]["accuracy"] for i in range(num_clients)]for j in range(num_global_rounds)])
+#plt.plot(x, np.mean(acc, axis = 1))
+plt.plot(x, acc[:,0])
+plt.plot(x, acc[:,1])
+#plt.plot(x,global_acc_results)
 plt.show()
 '''
 fig1 = plt.figure(1)

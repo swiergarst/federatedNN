@@ -99,6 +99,17 @@ class model(nn.Module):
                 return(convLayers, linLayers)
             else :
                 raise ValueError("no known model selection supplied")
+        elif dataset == "MNIST_2c_PCA":
+                return nn.Sequential(
+                    nn.Linear(6, 2),
+                    nn.ReLU(),
+                )
+        elif dataset == "kinase":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(8192, 1000),
+                    nn.ReLU(),
+                    nn.Linear(1000,2))
         else:
             raise ValueError("no known dataset supplied")
     #forward pass through the net
@@ -155,12 +166,15 @@ class model(nn.Module):
         with torch.no_grad():
             #for (x, y) in zip(X_test, y_test):
             output = self.forward(X_test)
-            fpr, tpr, thr = roc_curve(y_test, output.numpy()[:,1], drop_intermediate=False)
+            
 
             #loss = criterion(output, y)
             # for now, only look at accuracy, using criterion we can expand this later on 
             _, prediction = torch.max(output.data, 1)
             correct += (prediction == y_test).sum().item()
+
+            fpr, tpr, thr = roc_curve(y_test, output.numpy()[:,1], drop_intermediate=False)
+
             results = {
                 "accuracy" : correct/X_test.size()[0],
                 "FPR": fpr,

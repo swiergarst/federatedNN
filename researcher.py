@@ -58,11 +58,11 @@ stopping_threshold = 10
 ids = [org['id'] for org in client.collaboration.get(1)['organizations']]
 
 #dataset and booleans
-dataset = '3node' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
-week = "afstuderen/datafiles/FNN/fashion_MNIST_ci/"
+dataset = 'MNIST_2class' # options: MNIST_2class, MNIST_4class, MNIST, fashion_MNIST, A2, 3node, 2node
+week = dir_path + "/"
 
 model_choice = "FNN" #decides the neural network; either FNN or CNN
-save_file = True # whether to save results in .npy files
+save_file = False # whether to save results in .npy files
 
 # these settings change the distribution of the datasets between clients. sample_imbalance is not checked if class_imbalance is set to true
 class_imbalance = False
@@ -76,9 +76,9 @@ use_sizes = True # if false, the non-weighted average is used in federated avera
 
 
 #federated settings
-num_global_rounds = 100 #number of communication rounds
+num_global_rounds = 10 #number of communication rounds
 num_clients = 10 #number of clients (make sure this matches the amount of running vantage6 clients)
-num_runs = 4 #amount of experiments to run using consecutive seeds
+num_runs = 1 #amount of experiments to run using consecutive seeds
 seed_offset = 0 #decides which seeds to use: seed = seed_offset + current_run_number
 
 ### end of settings ###
@@ -187,7 +187,7 @@ for run in range(num_runs):
                         res = (np.load(BytesIO(result[0]["result"]),allow_pickle=True))
                         #print(res)
                         local_parameters[task_i] = res[0]
-                        acc_results[task_i, round] = res[1]
+                        acc_results[task_i, round] = res[1]["accuracy"]
                         dataset_sizes[task_i] = res[2]
                         ci[task_i] = res[3]
                         solved_tasks.append(task_i)
@@ -214,7 +214,7 @@ for run in range(num_runs):
         #newmap.save_round(round, local_parameters, parameters)
         # 'global' test
         testModel.set_params(parameters)
-        complete_test_results[round]  = testModel.test(X_test, y_test, criterion)
+        complete_test_results[round]  = testModel.test(X_test, y_test, criterion)["accuracy"]
         if (round % 10) == 0:
             clear_database()
     
