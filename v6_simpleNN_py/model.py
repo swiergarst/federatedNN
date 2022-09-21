@@ -107,9 +107,22 @@ class model(nn.Module):
         elif dataset == "kinase":
             if self.model_choice == "FNN":
                 return nn.Sequential(
-                    nn.Linear(8192, 1000),
+                    nn.Linear(8192, 100),
                     nn.ReLU(),
-                    nn.Linear(1000,2))
+                    nn.Linear(100,2))
+        elif dataset == "kinase_PCA":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(100, 100),
+                    nn.ReLU(),
+                    nn.Linear(100,2))
+        elif dataset == "breast":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(16313, 1000),
+                    nn.ReLU(),
+                    nn.Linear(1000,2)
+                )
         else:
             raise ValueError("no known dataset supplied")
     #forward pass through the net
