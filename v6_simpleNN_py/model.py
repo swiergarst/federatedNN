@@ -110,6 +110,12 @@ class model(nn.Module):
                     nn.Linear(8192, 100),
                     nn.ReLU(),
                     nn.Linear(100,2))
+        elif dataset == "kinase_ABL1" or dataset == "kinase_AKT":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(8192, 1000),
+                    nn.ReLU(),
+                    nn.Linear(1000,2))           
         elif dataset == "kinase_PCA":
             if self.model_choice == "FNN":
                 return nn.Sequential(
@@ -122,6 +128,29 @@ class model(nn.Module):
                     nn.Linear(16313, 1000),
                     nn.ReLU(),
                     nn.Linear(1000,2)
+                )
+        elif dataset == "breast_PCA":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(50,25),
+                    nn.ReLU(),
+                    nn.Linear(25,2)
+                )
+        elif dataset == "pancreas":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(8303,100),
+                    nn.ReLU(),
+                    nn.Linear(100,2)
+                )
+        elif dataset == "pancreas_PCA":
+            if self.model_choice == "FNN":
+                return nn.Sequential(
+                    nn.Linear(100,50),
+                    nn.ReLU(),
+                    nn.Linear(50,10),
+                    nn.ReLU(),
+                    nn.Linear(10,2)
                 )
         else:
             raise ValueError("no known dataset supplied")
