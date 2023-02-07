@@ -44,11 +44,15 @@ def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd
     else:
         net.set_params(parameters)
 
-    if model_choice == "CNN":        
-        reshape_size = int(math.sqrt(X_test.shape[1]))
-        X_test = X_test.reshape(X_test.shape[0], 1, reshape_size, reshape_size)
-        X_train = X_train.reshape(X_train.shape[0], 1, reshape_size, reshape_size)
-            
+    if model_choice == "CNN":     
+        if dataset == "kinase_KDR" or dataset == "kinase_ABL1":
+            X_test = X_test.reshape(X_test.shape[0], 1, 4096, 2)
+            X_train = X_train.reshape(X_train.shape[0], 1, 4096, 2)
+        else:
+            reshape_size = int(math.sqrt(X_test.shape[1]))
+            X_test = X_test.reshape(X_test.shape[0], 1, reshape_size, reshape_size)
+            X_train = X_train.reshape(X_train.shape[0], 1, reshape_size, reshape_size)
+                
     ### create optimizer 
     if (optimizer == 'SGD'):
         opt = optim.SGD(net.parameters(), lr=lr)
