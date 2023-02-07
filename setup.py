@@ -24,7 +24,7 @@ setup(
     packages=['v6_simpleNN_py'],
     python_requires='>=3.6',
     install_requires=[
-        'sklearn',
+        'scikit-learn',
         'torch',
         'numpy'
         # 'vantage6-client'

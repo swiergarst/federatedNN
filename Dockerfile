@@ -1,11 +1,14 @@
 # basic python3 image as base
-FROM harbor.vantage6.ai/algorithms/algorithm-base
+FROM harbor2.vantage6.ai/infrastructure/algorithm-base:legacy
 
 # This is a placeholder that should be overloaded by invoking
 # docker build with '--build-arg PKG_NAME=...'
 ARG PKG_NAME="v6_simpleNN_py"
 
+#ENV PYTHONPATH="/home/swier/miniconda3/envs/vantage6/bin/python"
 # install federated algorithm
+#RUN pip install -e ./setup.py
+
 COPY . /app
 
 #FROM python 

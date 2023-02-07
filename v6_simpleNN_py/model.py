@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import numpy as np
 import math
-import sys
 
 from sklearn.metrics import roc_curve
 
@@ -110,12 +109,19 @@ class model(nn.Module):
                     nn.Linear(8192, 100),
                     nn.ReLU(),
                     nn.Linear(100,2))
-        elif dataset == "kinase_ABL1" or dataset == "kinase_AKT":
+        elif dataset == "kinase_ABL1" or dataset == "kinase_KDR":
             if self.model_choice == "FNN":
                 return nn.Sequential(
                     nn.Linear(8192, 1000),
                     nn.ReLU(),
-                    nn.Linear(1000,2))           
+                    nn.Linear(1000,2)) 
+            elif self.model_choice == "CNN":
+                convLayers = nn.Sequential(
+                    nn.Conv2d(1,1, kernel_size=2, stride=1, padding=1),
+                    nn.MaxPool2d(kernel_size=2, stride=2)
+                )
+                linLayers = nn.Sequential(nn.Linear(2048,2))
+                return (convLayers, linLayers)          
         elif dataset == "kinase_PCA":
             if self.model_choice == "FNN":
                 return nn.Sequential(

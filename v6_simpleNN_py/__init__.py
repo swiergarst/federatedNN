@@ -62,7 +62,7 @@ def RPC_train_and_test(data, parameters, model_choice, nb_parameters = None, dgd
 
  
     ### return the new weights and the test results
-    return (net.get_params(), test_results, num_samples, net.ci, lepochs_used)
+    return (net.get_params(), test_results, num_samples, None, lepochs_used)
 
 
 def RPC_dicttest(data, setting):
