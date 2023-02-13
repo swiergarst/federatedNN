@@ -3,7 +3,7 @@ import torch.nn as nn
 import numpy as np
 import math
 
-from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_curve, confusion_matrix
 
 
 
@@ -223,10 +223,14 @@ class model(nn.Module):
 
             fpr, tpr, thr = roc_curve(y_test, output.numpy()[:,1], drop_intermediate=False)
 
+            cm = confusion_matrix(y_test, prediction.numpy())
+
+
             results = {
                 "accuracy" : correct/X_test.size()[0],
                 "FPR": fpr,
-                "TPR" : tpr
+                "TPR" : tpr,
+                "CM" : cm
             }
         # return result metrics
         return (results)
